@@ -1,0 +1,21 @@
+### Login pour récupérer le JWT
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "adminpass"
+}
+
+> {% 
+client.global.set("jwt_token", response.body.token);
+%}
+
+### Tester accès au secure-endpoint (doit marcher car ADMIN)
+GET http://localhost:8080/auth/secure-endpoint
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc0NTgxMjc0MiwiZXhwIjoxNzQ1ODk5MTQyfQ.6inSLzv-FkhPNjjXbCkNoLlbdIPa2g5EjCkfINzn6wg
+Accept: application/json
+
+### Tester accès au secure-endpoint sans token (doit échouer 401)
+GET http://localhost:8080/auth/secure-endpoint
+Accept: application/json
