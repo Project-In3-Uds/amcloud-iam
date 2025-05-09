@@ -13,7 +13,7 @@ client.global.set("jwt_token", response.body.token);
 
 ### Tester accès au secure-endpoint (doit marcher car ADMIN)
 GET http://localhost:8080/auth/secure-endpoint
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc0NTgxMjc0MiwiZXhwIjoxNzQ1ODk5MTQyfQ.6inSLzv-FkhPNjjXbCkNoLlbdIPa2g5EjCkfINzn6wg
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc0Njc1ODQ0MCwiZXhwIjoxNzQ2NzYyMDQwfQ.UjiENMp2SAKpw2f-7_40_aSnO3IGBEHqkvvx2AM0RjE
 Accept: application/json
 
 ### Tester accès au secure-endpoint sans token (doit échouer 401)
