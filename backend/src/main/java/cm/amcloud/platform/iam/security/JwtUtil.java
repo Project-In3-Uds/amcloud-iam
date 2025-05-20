@@ -22,7 +22,7 @@ public class JwtUtil {
  
     private static final long EXPIRATION = 1000 * 60 * 60; //1 heure
     
-    @Value("${jwt.privaterivate-key-path}")
+    @Value("${jwt.private-key-path}")
     private String privateKeyPath;
 
     private final ResourceLoader resourceLoader;
