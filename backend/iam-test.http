@@ -13,9 +13,22 @@ client.global.set("jwt_token", response.body.token);
 
 ### Tester accès au secure-endpoint (doit marcher car ADMIN)
 GET http://localhost:8080/auth/secure-endpoint
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc0Njc1ODQ0MCwiZXhwIjoxNzQ2NzYyMDQwfQ.UjiENMp2SAKpw2f-7_40_aSnO3IGBEHqkvvx2AM0RjE
+Authorization: Bearer eyJraWQiOiJteS1rZXktaWQiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc0ODg0NzEzMywiZXhwIjoxNzQ4ODUwNzMzfQ.oLJ17Uq3-CkqswkKlvqeMkG-8Tv44OqBQ2Y8q5UWCPEQJYw7C6UHVwQCgk080mg36_m-mpFGYO2Cbhi80pDbgyHes0FxQesMU_3c6FgPOfqDuD1S71gt8l0Z-SIPAfv-GfEAoQlM-YkR6gJoEf9bP59aiTmih1HhH-9cjPTZ88GxAKqea3HHCvM53ULNQC-VxdHmqAWnMtC04mA9-4vp6uTLPgjn9YqoA-XKGo8A7b98bNy2F_-orB2OCSuXisyiV7QkBhQ9mtPgGVo28psQcG86b1BPEPminZ5vd2QvI5jz4fdtwfA3h4FQQ7uOl4BlG4NIGs0Q8MUgPe4QYg54IA
 Accept: application/json
 
 ### Tester accès au secure-endpoint sans token (doit échouer 401)
 GET http://localhost:8080/auth/secure-endpoint
 Accept: application/json
+
+### Récupérer la configuration OpenID Connect
+GET http://localhost:8081/.well-known/openid-configuration
+
+### Récupérer le JWKS (JSON Web Key Set) pour vérifier les signatures des JWT
+GET http://localhost:8081/jwks.json
+
+### Tester le TestTokenController pour générer un JWT
+GET http://localhost:8080/secure-data
+Authorization: Bearer eyJraWQiOiJteS1rZXktaWQiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc0ODg1NTg4NCwiZXhwIjoxNzQ4ODU5NDg0fQ.IaH_3M_V3KfvVOeBnxGB1PHsnKgbRZEr3ZZgAX7NpJ0KUURK8vosqtX-gxJe98CuyWTAEEeTXA2ZViljvwVdvgo-GlKCC5u-j9uIKj72ZRpt5bJvnhV9YCH37WzNdHUp19zm9Qa7Vb-RKzI_jp2i9SqW7vennhkjexu8n9VOw_svY2hJEPAoo6VGVQIoRfpJphIbwV0OAaFOllFQffGsWpvyXngd0P7TFe9gQMrP3xMJlZewCXZWPalEmGbult_tbCF7jDEOdzWtkrKA2oClZ8GC4GAlGO_DoX5M5CDPDnGzUv-y1h2rg8glIA73O2K-AtQ6vzrgPjZJW8KC8f2cFg
+Accept: application/json
+
+

@@ -11,18 +11,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import cm.amcloud.platform.iam.dto.AuthRequest;
 import cm.amcloud.platform.iam.dto.AuthResponse;
-import cm.amcloud.platform.iam.security.JwtUtil;
+import cm.amcloud.platform.iam.security.JwtService;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthenticationController {
 
     private final AuthenticationManager authenticationManager;
-    private final JwtUtil jwtUtil;
+    private final JwtService jwtService; 
 
-    public AuthenticationController(AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
+    public AuthenticationController(AuthenticationManager authenticationManager, JwtService jwtService) {
         this.authenticationManager = authenticationManager;
-        this.jwtUtil = jwtUtil;
+        this.jwtService = jwtService; 
     }
 
     @PostMapping("/login")
@@ -32,7 +32,7 @@ public class AuthenticationController {
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
             );
 
-            String token = jwtUtil.generateToken(request.getUsername());
+            String token = jwtService.generateToken(request.getUsername()); 
             return new AuthResponse(token);
         } catch (AuthenticationException e) {
             throw new RuntimeException("Invalid Credentials");
