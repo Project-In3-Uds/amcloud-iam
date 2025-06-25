@@ -96,6 +96,23 @@
     		<artifactId>dotenv-java</artifactId>
     		<version>3.0.0</version>
 		</dependency>
+
+		<!--spring starter actuator-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
+		<dependency>
+    <groupId>com.nimbusds</groupId>
+    <artifactId>nimbus-jose-jwt</artifactId>
+    <version>9.37</version> </dependency>
+
+	<!-- mono -->
+	<dependency>
+		<groupId>io.projectreactor</groupId>
+		<artifactId>reactor-core</artifactId>
+	</dependency>
 	</dependencies>
     
 	<dependencyManagement>
