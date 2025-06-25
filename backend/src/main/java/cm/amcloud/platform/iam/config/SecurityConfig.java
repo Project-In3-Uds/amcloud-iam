@@ -27,7 +27,9 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers("/auth/login",
+                        "/.well-known/openid-configuration",
+                        "/jwks.json", "/test/public/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .build();

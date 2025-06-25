@@ -11,11 +11,24 @@ Content-Type: application/json
 client.global.set("jwt_token", response.body.token);
 %}
 
-### Tester accès au secure-endpoint (doit marcher car ADMIN)
+### Tester accès au secure-endpoint (cette requete passe par la Gateay et le token doit avoir le role ADMIN)
 GET http://localhost:8080/auth/secure-endpoint
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc0Njc1ODQ0MCwiZXhwIjoxNzQ2NzYyMDQwfQ.UjiENMp2SAKpw2f-7_40_aSnO3IGBEHqkvvx2AM0RjE
+Authorization: Bearer eyJraWQiOiJteS1rZXktaWQiLCJhbGciOiJSUzI1NiJ9.eyJyb2xlcyI6WyJST0xFX0FETUlOIl0sInNjb3BlcyI6WyJyZWFkIiwid3JpdGUiXSwic3ViIjoiYWRtaW4iLCJpYXQiOjE3NDkxODgyMTcsImV4cCI6MTc0OTE5MTgxNywiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgxIn0.iTkzK0hwTKqqVymTzk0xVLhwUVlR_py-xBLEckH74VQSQVVT5qHYX9ST1i5pl7OtkhnLwziUjEzgyfBZbS0ImBGlMvghOQ50Z1JShhNK1Ga0ZW3lfzqvwqneAQZ0l7mxWboDkSHsi00mh4cH8HP3qoeI2X2cc5kLO59sirVsiLLjVfi8loO0xavz0Nojqxrctmur7NjLRe3h3lFNmrVClPMYwlaYnUjoO2jJRrpt1ClPkJQlHK2w7nQu2I7Fr72pYiTx5IKtTVBWa5PeXVymRiFHCJsk2I7yqCMaiR5oNP0bpFqZ74I1MRgvX63YE4EBd5aSvFy7xyp8vw5bkaVUmw
 Accept: application/json
 
 ### Tester accès au secure-endpoint sans token (doit échouer 401)
 GET http://localhost:8080/auth/secure-endpoint
 Accept: application/json
+
+### Récupérer la configuration OpenID Connect
+GET http://localhost:8081/.well-known/openid-configuration
+
+### Récupérer le JWKS (JSON Web Key Set) pour vérifier les signatures des JWT
+GET http://localhost:8081/jwks.json
+
+### Tester le TestTokenController pour générer un JWT
+GET http://localhost:8080/secure-data
+Authorization: Bearer eyJraWQiOiJteS1rZXktaWQiLCJhbGciOiJSUzI1NiJ9.eyJyb2xlcyI6WyJST0xFX0FETUlOIl0sInNjb3BlcyI6WyJyZWFkIiwid3JpdGUiXSwic3ViIjoiYWRtaW4iLCJpYXQiOjE3NDg5MzU1MTQsImV4cCI6MTc0ODkzOTExNCwiaXNzIjoiaHR0cDovL2lhbTo4MDgxIn0.MBbS0XWsL4ZTCc_glCmTXm6bZwrHQAt44zwHkMQRoEEFkxXcvTJFxcQ_dDcApw5d0SGspZb70EdokHh64xJooQzOilCIQL_uOi_edKyIk7DaZ9fSHT8wrHw-jEncHa8VLYC5gmWp-Itknz1pjV1OQl2gDLVbZTidmHLjVmmx5Ls0dBbVdHIyCNbipoznDJ8bsSRfeMBxSePjwe3LhAdSKJb16BQUz4HxoH-DRSNLBrLEMaE_OxgSGy4tXpcx54pyps1GllLBZiTjKVaH853saX7llw1gQlSZ1b7Tge5oFeAt_I54qMWcyRSWnI8bj6ErYY36iv_AG3tRBKQi4Hquyw
+Accept: application/json
+
+
