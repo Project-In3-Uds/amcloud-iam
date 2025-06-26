@@ -1,44 +1,7 @@
-#spring:
-#  application:
-#    name: iam
-#  config:
-#    import: optional:configserver:${CONFIG_SERVER_URL}
-
-server:
-  port: ${IAM_SERVER_PORT}
-
 spring:
-  cloud:
-    config:
-        enabled: false
-
   application:
     name: iam
-  datasource:
-    url: ${MAIN_DB_URL}
-    driver-class-name: ${MAIN_DB_DRIVER_CLASS_NAME}
-    username: ${MAIN_DB_USERNAME}
-    password: ${MAIN_DB_PASSWORD}
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL}
 
-  jpa:
-    hibernate:
-      ddl-auto: ${JPA_HIBERNATE_DDL_AUTO}
-    show-sql: true
-    database-platform: ${JPA_DATABASE_PLATFORM}
-  sql:
-    init:
-      mode: ${SQL_INIT_MODE}
-
-iam:
-  issuer-uri: ${ISSUER_URI}
-
-jwt:
-  private-key-path: ${JWT_PRIVATE_KEY_PATH}
-  public-key-path: ${JWT_PUBLIC_KEY_PATH}
-  expiration-seconds: ${JWT_EXPIRATION_TIME}
-  key-id: ${JWT_KEY_ID}
-
-logging:
-  level:
-    org.springframework.security: DEBUG
-    org.springframework: DEBUG
+ 
