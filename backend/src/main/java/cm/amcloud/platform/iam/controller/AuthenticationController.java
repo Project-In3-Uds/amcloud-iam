@@ -1,5 +1,10 @@
 package cm.amcloud.platform.iam.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -25,6 +30,12 @@ public class AuthenticationController {
         this.jwtService = jwtService; 
     }
 
+    @Operation(summary = "Authenticate a user and return a JWT token")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Authentication successful",
+                    content = @Content(schema = @Schema(implementation = AuthResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Invalid credentials")
+    })
     @PostMapping("/login")
     public AuthResponse login(@RequestBody AuthRequest request) {
         try {
@@ -39,6 +50,11 @@ public class AuthenticationController {
         }
     }
 
+    @Operation(summary = "Access a protected resource")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Access granted"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
     @GetMapping("/secure-endpoint")
     public String secureEndpoint() {
         return "You have accessed a protected resource!";

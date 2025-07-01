@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer; // Import this
 
 import cm.amcloud.platform.iam.security.CustomUserDetailsService;
 
@@ -25,11 +26,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .csrf(csrf -> csrf.disable())
+                .csrf(AbstractHttpConfigurer::disable) 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login",
-                        "/.well-known/openid-configuration",
-                        "/jwks.json", "/test/public/**").permitAll()
+                        // Permit access to your public endpoints
+                        .requestMatchers("/auth/login", "/.well-known/openid-configuration", "/jwks.json", "/test/public/**").permitAll()
+                        // Permit access to Springdoc/Swagger UI endpoints
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**").permitAll() 
+                        // All other requests require authentication
                         .anyRequest().authenticated()
                 )
                 .build();
