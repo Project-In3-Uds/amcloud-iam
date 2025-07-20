@@ -1,18 +1,25 @@
 package cm.amcloud.platform.iam.service;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
+import cm.amcloud.platform.iam.dto.RegisterRequest;
+import cm.amcloud.platform.iam.model.EmailVerificationToken;
+import cm.amcloud.platform.iam.model.Role;
+import cm.amcloud.platform.iam.model.RefreshToken; // Import RefreshToken
+import cm.amcloud.platform.iam.model.User;
+import cm.amcloud.platform.iam.repository.EmailVerificationTokenRepository;
+import cm.amcloud.platform.iam.repository.RoleRepository;
+import cm.amcloud.platform.iam.repository.UserRepository;
+import cm.amcloud.platform.iam.repository.RefreshTokenRepository; // Import RefreshTokenRepository
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import cm.amcloud.platform.iam.dto.RegisterRequest;
-import cm.amcloud.platform.iam.model.EmailVerificationToken;
-import cm.amcloud.platform.iam.model.User;
-import cm.amcloud.platform.iam.repository.EmailVerificationTokenRepository;
-import cm.amcloud.platform.iam.repository.UserRepository;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -21,6 +28,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final PasswordValidationService passwordValidationService;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
+    private final RoleRepository roleRepository;
+    private final RefreshTokenRepository refreshTokenRepository; // Inject RefreshTokenRepository
 
     @Value("${account.lockout.max-attempts:2}")
     private int maxFailedAttempts;
@@ -31,12 +40,17 @@ public class UserService {
     public UserService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        PasswordValidationService passwordValidationService,
-                       EmailVerificationTokenRepository emailVerificationTokenRepository) {
+                       EmailVerificationTokenRepository emailVerificationTokenRepository,
+                       RoleRepository roleRepository,
+                       RefreshTokenRepository refreshTokenRepository) { // Add RefreshTokenRepository to constructor
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.passwordValidationService = passwordValidationService;
         this.emailVerificationTokenRepository = emailVerificationTokenRepository;
+        this.roleRepository = roleRepository;
+        this.refreshTokenRepository = refreshTokenRepository; // Initialize RefreshTokenRepository
     }
+
 
     /**
      * Registers a new user, hashes their password, and generates an email verification token.
@@ -62,11 +76,23 @@ public class UserService {
         newUser.setEmail(request.getEmail());
         newUser.setPassword(passwordEncoder.encode(request.getPassword()));
         newUser.setStatus("PENDING_VERIFICATION");
-        newUser.setEnabled(false); // User is not enabled until email is verified
+        newUser.setEnabled(false);
         newUser.setCreatedAt(LocalDateTime.now());
         newUser.setUpdatedAt(LocalDateTime.now());
-        newUser.setFailedAttempts(0); // Initialize failed attempts
-        newUser.setLockoutTime(null); // No lockout time initially
+        newUser.setFailedAttempts(0);
+        newUser.setLockoutTime(null);
+
+        Optional<Role> userRoleOptional = roleRepository.findByName("ROLE_USER");
+        if (userRoleOptional.isEmpty()) {
+             Role userRole = new Role();
+             userRole.setName("ROLE_USER");
+             userRole = roleRepository.save(userRole);
+             userRoleOptional = Optional.of(userRole);
+        }
+        Set<Role> roles = new HashSet<>();
+        userRoleOptional.ifPresent(roles::add);
+        newUser.setRoles(roles);
+
 
         User savedUser = userRepository.save(newUser);
 
@@ -77,9 +103,6 @@ public class UserService {
         verificationToken.setCreatedAt(LocalDateTime.now());
 
         emailVerificationTokenRepository.save(verificationToken);
-
-        // TODO: In a real application, you would send an email here
-        // sendVerificationEmail(savedUser.getEmail(), verificationToken.getToken());
 
         return savedUser;
     }
@@ -109,7 +132,6 @@ public class UserService {
 
         if (user.getFailedAttempts() >= maxFailedAttempts) {
             user.setLockoutTime(LocalDateTime.now().plusMinutes(lockoutDurationMinutes));
-             // TODO: Log this lockout event for security monitoring
         }
         userRepository.save(user);
     }
@@ -124,7 +146,7 @@ public class UserService {
     public void resetFailedAttempts(User user) {
         user.setFailedAttempts(0);
         user.setLockoutTime(null);
-        user.setEnabled(true); // Ensure user is enabled after successful login
+        user.setEnabled(true);
         user.setLastLoginAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
@@ -138,5 +160,24 @@ public class UserService {
      */
     public boolean isAccountLocked(User user) {
         return user.getLockoutTime() != null && user.getLockoutTime().isAfter(LocalDateTime.now());
+    }
+
+    /**
+     * Revokes a refresh token, effectively logging out the user from that session.
+     *
+     * @param refreshTokenString The refresh token string to revoke.
+     * @throws IllegalArgumentException if the refresh token is not found or already revoked.
+     */
+    @Transactional
+    public void logoutUser(String refreshTokenString) {
+        RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenString)
+                .orElseThrow(() -> new IllegalArgumentException("Refresh token not found or invalid."));
+
+        if (refreshToken.getRevokedAt() != null) {
+            throw new IllegalArgumentException("Refresh token already revoked.");
+        }
+
+        refreshToken.setRevokedAt(LocalDateTime.now());
+        refreshTokenRepository.save(refreshToken);
     }
 }

@@ -29,7 +29,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable) 
                 .authorizeHttpRequests(auth -> auth
                         // Permit access to your public endpoints
-                        .requestMatchers("/auth/login","/auth/register","/auth/refresh-token", "/.well-known/openid-configuration", "/jwks.json", "/test/public/**").permitAll()
+                        .requestMatchers("/auth/login","/auth/register","/auth/refresh-token","/auth/logout", "/.well-known/openid-configuration", "/jwks.json", "/test/public/**").permitAll()
                         // Permit access to Springdoc/Swagger UI endpoints
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**").permitAll() 
                         // All other requests require authentication

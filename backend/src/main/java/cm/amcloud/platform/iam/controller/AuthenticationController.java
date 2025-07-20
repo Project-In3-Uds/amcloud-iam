@@ -174,6 +174,30 @@ public class AuthenticationController {
             throw new RuntimeException("Failed to refresh token: " + e.getMessage());
         }
     }
+    
+    @Operation(summary = "Logout user by revoking Refresh Token")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Logout successful"),
+            @ApiResponse(responseCode = "400", description = "Invalid or already revoked Refresh Token")
+    })
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestBody Map<String, String> request) {
+        String refreshTokenString = request.get("refreshToken");
+
+        if (refreshTokenString == null || refreshTokenString.isBlank()) {
+            return new ResponseEntity<>("Refresh token is missing.", HttpStatus.BAD_REQUEST);
+        }
+
+        try {
+            userService.logoutUser(refreshTokenString);
+            return new ResponseEntity<>("Logout successful.", HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("An unexpected error occurred during logout.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     @Operation(summary = "Access a protected resource")
     @ApiResponses(value = {
