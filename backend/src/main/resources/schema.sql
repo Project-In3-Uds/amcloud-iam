@@ -1,8 +1,13 @@
+-- Ensure the public schema exists and is used
+CREATE SCHEMA IF NOT EXISTS public;
+SET search_path TO public;
+
 -- Drop tables that have foreign key dependencies first
 DROP TABLE IF EXISTS user_roles;
 DROP TABLE IF EXISTS password_reset_tokens;
 DROP TABLE IF EXISTS role_permissions; 
 DROP TABLE IF EXISTS email_verification_tokens;
+DROP TABLE IF EXISTS refresh_tokens;
 
 -- Drop the main tables they depend on
 DROP TABLE IF EXISTS users;
@@ -43,7 +48,8 @@ CREATE TABLE user_roles (
 -- Create permissions table
 CREATE TABLE permissions (
     id BIGSERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
+    name VARCHAR(255) NOT NULL,
+    scope_value VARCHAR(255)
 );
 
 -- Create role_permissions table
@@ -73,5 +79,16 @@ CREATE TABLE email_verification_tokens (
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     verified_at TIMESTAMP, 
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Create refresh_tokens table
+CREATE TABLE refresh_tokens (
+    id BIGSERIAL PRIMARY KEY,
+    token TEXT NOT NULL UNIQUE,
+    user_id BIGINT NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    revoked_at TIMESTAMP, 
     FOREIGN KEY (user_id) REFERENCES users(id)
 );

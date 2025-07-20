@@ -9,7 +9,8 @@ Content-Type: application/json
 }
 
 {%
-client.global.set("jwt_token", response.body.token);
+client.global.set("access_token", response.body.accessToken);
+client.global.set("refresh_token", response.body.refreshToken);
 %}
 
 ###
@@ -22,6 +23,19 @@ Content-Type: application/json
 "email": "test123@example.com",
 "password": "Password123@1"
 }
+
+###
+POST http://localhost:8081/auth/refresh-token
+Content-Type: application/json
+
+{
+"refreshToken": "eyJraWQiOiJteS1rZXktaWQiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc1MzAwOTcyMSwiZXhwIjoxNzUzNjE0NTIxLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODEifQ.igpZjzR3xcXKrEutqddSI5JwEDGbOEw4zEVuMnHUappZIB5rOwUHlLASVW6tGjxk5oFz35XaucOU40_J9LT1elRDIYRBDR5USHqixmg-BY7BaGlyD5ruR1OTCNyX03FVLAaf8OVMNb8bZZMM-F9VRMl_7yii4NXF4u7B_b01M2idj7ABA2hQD0FBe6htZJnlg9kcyaA2ATOe61dcql8Ysp_lOtwQkGCWGg44Vupo-KPulLU4WE3jAK4ygGLnRpRwASxpS9MJeYfef3JtfUpXsFlOhSshc5tqbN2ux30DKizxSljR3BD3y02JbGloT6_vU_N2HRpung6NJDAwqGncGg"
+}
+
+{%
+client.global.set("new_access_token", response.body.accessToken);
+client.global.set("new_refresh_token", response.body.refreshToken);
+%}
 ###
 ## Tester accès au secure-endpoint (cette requete passe par la Gateay et le token doit avoir le role ADMIN)
 GET http://localhost:8080/auth/secure-endpoint

@@ -20,10 +20,10 @@ INSERT INTO users (
 INSERT INTO user_roles (user_id, role_id) VALUES (2, 1);
 
 -- Initialisation de la table permissions
-INSERT INTO permissions (id, name) VALUES
-(1, 'PERM_READ'),
-(2, 'PERM_WRITE'),
-(3, 'PERM_DELETE');
+INSERT INTO permissions (id, name, scope_value) VALUES
+(1, 'PERM_READ', 'read'),
+(2, 'PERM_WRITE', 'write'),
+(3, 'PERM_DELETE', 'delete');
 -- Initialisation de la table role_permissions
 INSERT INTO role_permissions (role_id, permission_id) VALUES
 (1, 1),
