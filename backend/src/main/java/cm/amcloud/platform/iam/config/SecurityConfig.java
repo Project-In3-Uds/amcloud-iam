@@ -7,10 +7,10 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer; // Import this
+import org.springframework.security.web.SecurityFilterChain; // Import this
 
 import cm.amcloud.platform.iam.security.CustomUserDetailsService;
 
@@ -29,7 +29,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable) 
                 .authorizeHttpRequests(auth -> auth
                         // Permit access to your public endpoints
-                        .requestMatchers("/auth/login", "/.well-known/openid-configuration", "/jwks.json", "/test/public/**").permitAll()
+                        .requestMatchers("/auth/login","/auth/register", "/.well-known/openid-configuration", "/jwks.json", "/test/public/**").permitAll()
                         // Permit access to Springdoc/Swagger UI endpoints
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**").permitAll() 
                         // All other requests require authentication

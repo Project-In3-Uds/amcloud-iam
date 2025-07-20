@@ -1,8 +1,11 @@
 package cm.amcloud.platform.iam;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource; // Import for TestPropertySource annotation
+import org.springframework.context.ApplicationContext; // Import for TestPropertySource annotation
+import org.springframework.test.context.TestPropertySource;
 
 /**
  * Integration test for the Spring Boot application context loading.
@@ -53,6 +56,9 @@ import org.springframework.test.context.TestPropertySource; // Import for TestPr
 })
 class IamApplicationTests {
 
+    @Autowired
+    private ApplicationContext applicationContext;
+
     /**
      * This test method simply verifies that the Spring application context
      * loads successfully without any errors. It's a basic sanity check
@@ -61,8 +67,7 @@ class IamApplicationTests {
      */
     @Test
     void contextLoads() {
-        // The test passes if the application context loads without throwing exceptions.
-        // This confirms that all required properties are resolved and beans can be created.
+        assertNotNull(applicationContext);
     }
 
 }
