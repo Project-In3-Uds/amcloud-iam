@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import cm.amcloud.platform.iam.dto.AuthRequest;
 import cm.amcloud.platform.iam.dto.AuthResponse;
+import cm.amcloud.platform.iam.dto.ForgotPasswordRequest;
 import cm.amcloud.platform.iam.dto.RegisterRequest;
+import cm.amcloud.platform.iam.dto.ResetPasswordRequest;
 import cm.amcloud.platform.iam.exception.AccountLockedException;
 import cm.amcloud.platform.iam.exception.InvalidCredentialsException;
 import cm.amcloud.platform.iam.model.RefreshToken;
@@ -26,10 +28,10 @@ import cm.amcloud.platform.iam.repository.RefreshTokenRepository;
 import cm.amcloud.platform.iam.security.JwtService;
 import cm.amcloud.platform.iam.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content; // Import RefreshToken model
-import io.swagger.v3.oas.annotations.media.Schema; // Import RefreshTokenRepository
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses; // Import for LocalDateTime
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse; // Assurez-vous que cet import est présent
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 
 @RestController
@@ -39,13 +41,13 @@ public class AuthenticationController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UserService userService;
-    private final RefreshTokenRepository refreshTokenRepository; // Inject RefreshTokenRepository
+    private final RefreshTokenRepository refreshTokenRepository;
 
     public AuthenticationController(AuthenticationManager authenticationManager, JwtService jwtService, UserService userService, RefreshTokenRepository refreshTokenRepository) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.userService = userService;
-        this.refreshTokenRepository = refreshTokenRepository; // Initialize RefreshTokenRepository
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     @Operation(summary = "Authenticate a user and return a JWT Access Token and Refresh Token")
@@ -55,7 +57,7 @@ public class AuthenticationController {
             @ApiResponse(responseCode = "401", description = "Invalid credentials or account locked")
     })
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody AuthRequest request) {
+    public AuthResponse login(@Valid @RequestBody AuthRequest request) { 
         User user = null;
         try {
             user = userService.findByUsername(request.getUsername());
@@ -73,13 +75,10 @@ public class AuthenticationController {
             String accessToken = jwtService.generateAccessToken(request.getUsername());
             String refreshTokenString = jwtService.generateRefreshToken(request.getUsername());
 
-            // Save the Refresh Token to the database
             RefreshToken refreshToken = new RefreshToken();
             refreshToken.setToken(refreshTokenString);
-            refreshToken.setUser(user); // Link to the authenticated user
-            // Set expiration based on the JWT's expiration (from JwtService)
-            // For simplicity, we'll re-calculate it here, or you can pass it from JwtService
-            refreshToken.setExpiresAt(LocalDateTime.now().plusDays(7)); // Assuming 7 days as per jwt.refresh-token.expiration-days
+            refreshToken.setUser(user);
+            refreshToken.setExpiresAt(LocalDateTime.now().plusDays(7));
             refreshToken.setCreatedAt(LocalDateTime.now());
             refreshTokenRepository.save(refreshToken);
 
@@ -126,6 +125,7 @@ public class AuthenticationController {
     })
     @PostMapping("/refresh-token")
     public AuthResponse refreshToken(@RequestBody Map<String, String> request) {
+        // Note: Validation for refreshToken is done manually here as it's a simple String in a Map
         String refreshTokenString = request.get("refreshToken");
 
         if (refreshTokenString == null || refreshTokenString.isBlank()) {
@@ -133,48 +133,41 @@ public class AuthenticationController {
         }
 
         try {
-            // 1. Find the refresh token in the database
             RefreshToken storedRefreshToken = refreshTokenRepository.findByToken(refreshTokenString)
                     .orElseThrow(() -> new InvalidCredentialsException("Refresh token not found or invalid."));
 
-            // 2. Check if the refresh token is expired or revoked
             if (jwtService.isTokenExpired(storedRefreshToken.getToken()) || storedRefreshToken.getRevokedAt() != null) {
                 throw new InvalidCredentialsException("Refresh token is expired or has been revoked.");
             }
 
-            // 3. Get the user associated with the refresh token
             User user = storedRefreshToken.getUser();
             if (user == null || !user.isEnabled()) {
                 throw new InvalidCredentialsException("Associated user not found or is disabled.");
             }
 
-            // 4. Implement Refresh Token Rotation: Revoke the old token
             storedRefreshToken.setRevokedAt(LocalDateTime.now());
             refreshTokenRepository.save(storedRefreshToken);
 
-            // 5. Generate new Access Token and new Refresh Token
             String newAccessToken = jwtService.generateAccessToken(user.getUsername());
             String newRefreshTokenString = jwtService.generateRefreshToken(user.getUsername());
 
-            // 6. Save the new Refresh Token
             RefreshToken newRefreshToken = new RefreshToken();
             newRefreshToken.setToken(newRefreshTokenString);
             newRefreshToken.setUser(user);
-            newRefreshToken.setExpiresAt(LocalDateTime.now().plusDays(7)); // Assuming 7 days
+            newRefreshToken.setExpiresAt(LocalDateTime.now().plusDays(7));
             newRefreshToken.setCreatedAt(LocalDateTime.now());
             refreshTokenRepository.save(newRefreshToken);
 
             return new AuthResponse(newAccessToken, newRefreshTokenString);
 
         } catch (InvalidCredentialsException e) {
-            throw e; // Re-throw custom exception for global handling
+            throw e;
         } catch (Exception e) {
-            // Log the exception for debugging
             e.printStackTrace();
             throw new RuntimeException("Failed to refresh token: " + e.getMessage());
         }
     }
-    
+
     @Operation(summary = "Logout user by revoking Refresh Token")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Logout successful"),
@@ -182,6 +175,7 @@ public class AuthenticationController {
     })
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@RequestBody Map<String, String> request) {
+        // Note: Validation for refreshToken is done manually here as it's a simple String in a Map
         String refreshTokenString = request.get("refreshToken");
 
         if (refreshTokenString == null || refreshTokenString.isBlank()) {
@@ -196,6 +190,42 @@ public class AuthenticationController {
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>("An unexpected error occurred during logout.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Operation(summary = "Request a password reset token by email")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Password reset token requested successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid email or user not found/disabled")
+    })
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) { 
+        try {
+            userService.createPasswordResetToken(request.getEmail());
+            return new ResponseEntity<>("Un e-mail de réinitialisation de mot de passe a été envoyé à votre adresse.", HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Une erreur inattendue est survenue lors de la demande de réinitialisation de mot de passe.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Operation(summary = "Reset password using a valid token")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Password reset successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid token, passwords mismatch, or password policy not met")
+    })
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) { 
+        try {
+            userService.resetPassword(request.getToken(), request.getNewPassword(), request.getConfirmNewPassword());
+            return new ResponseEntity<>("Le mot de passe a été réinitialisé avec succès.", HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Une erreur inattendue est survenue lors de la réinitialisation du mot de passe.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

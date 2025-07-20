@@ -24,6 +24,7 @@ INSERT INTO permissions (id, name, scope_value) VALUES
 (1, 'PERM_READ', 'read'),
 (2, 'PERM_WRITE', 'write'),
 (3, 'PERM_DELETE', 'delete');
+
 -- Initialisation de la table role_permissions
 INSERT INTO role_permissions (role_id, permission_id) VALUES
 (1, 1),
@@ -31,5 +32,8 @@ INSERT INTO role_permissions (role_id, permission_id) VALUES
 (1, 3);
 
 -- Reset the sequence for the users table's ID column
--- This ensures that new auto-generated IDs start after the manually inserted ones.
 SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
+-- Reset the sequence for the roles table's ID column
+SELECT setval('roles_id_seq', (SELECT MAX(id) FROM roles));
+-- Reset the sequence for the permissions table's ID column
+SELECT setval('permissions_id_seq', (SELECT MAX(id) FROM permissions));

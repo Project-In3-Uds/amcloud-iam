@@ -13,7 +13,7 @@ public class RegisterRequest {
     private String email;
 
     @NotBlank(message = "Password cannot be empty")
-    @Size(min = 8, message = "Password must be at least 8 characters long") // Basic client-side validation hint
+    @Size(min = 8, message = "Password must be at least 8 characters long")  
     private String password;
 
     // Getters and Setters

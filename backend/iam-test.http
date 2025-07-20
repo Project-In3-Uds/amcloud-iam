@@ -47,6 +47,41 @@ Content-Type: application/json
 }
 
 ###
+##Demander un token de réinitialisation de mot de passe
+POST http://localhost:8081/auth/forgot-password
+Content-Type: application/json
+
+{
+"email": "test123@example.com"
+}
+
+{%
+// Pour le test, si le service renvoie le token dans le message de succès (ce qui n'est pas recommandé en prod)
+// Adaptez cette regex si le format du message change
+const responseBody = response.body;
+const tokenMatch = responseBody.match(/pour testing: (.*)).$/); // Ancienne regex
+if (tokenMatch && tokenMatch[1]) {
+client.global.set("reset_password_token", tokenMatch[1]);
+} else {
+// Si le token n'est plus exposé dans la réponse, vous devrez le récupérer depuis les logs du serveur
+// ou simuler sa réception pour le test de reset-password.
+// Pour l'instant, nous allons le laisser vide si non trouvé.
+client.global.set("reset_password_token", "TOKEN_FROM_SERVER_LOGS_OR_MOCK");
+console.log("Password reset token not found in response. Please check server logs for the token.");
+}
+%}
+
+###
+#Réinitialiser le mot de passe avec le token
+POST http://localhost:8081/auth/reset-password
+Content-Type: application/json
+
+{
+"token": "{{reset_password_token}}",
+"newPassword": "NewStrongPassword1!",
+"confirmNewPassword": "NewStrongPassword1!"
+}
+###
 ## Tester accès au secure-endpoint (cette requete passe par la Gateay et le token doit avoir le role ADMIN)
 GET http://localhost:8080/auth/secure-endpoint
 Authorization: Bearer eyJraWQiOiJteS1rZXktaWQiLCJhbGciOiJSUzI1NiJ9.eyJyb2xlcyI6WyJST0xFX0FETUlOIl0sInNjb3BlcyI6WyJyZWFkIiwid3JpdGUiXSwic3ViIjoiYWRtaW4iLCJpYXQiOjE3NDkxODgyMTcsImV4cCI6MTc0OTE5MTgxNywiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgxIn0.iTkzK0hwTKqqVymTzk0xVLhwUVlR_py-xBLEckH74VQSQVVT5qHYX9ST1i5pl7OtkhnLwziUjEzgyfBZbS0ImBGlMvghOQ50Z1JShhNK1Ga0ZW3lfzqvwqneAQZ0l7mxWboDkSHsi00mh4cH8HP3qoeI2X2cc5kLO59sirVsiLLjVfi8loO0xavz0Nojqxrctmur7NjLRe3h3lFNmrVClPMYwlaYnUjoO2jJRrpt1ClPkJQlHK2w7nQu2I7Fr72pYiTx5IKtTVBWa5PeXVymRiFHCJsk2I7yqCMaiR5oNP0bpFqZ74I1MRgvX63YE4EBd5aSvFy7xyp8vw5bkaVUmw

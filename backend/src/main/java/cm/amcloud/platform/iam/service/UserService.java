@@ -1,25 +1,27 @@
 package cm.amcloud.platform.iam.service;
 
-import cm.amcloud.platform.iam.dto.RegisterRequest;
-import cm.amcloud.platform.iam.model.EmailVerificationToken;
-import cm.amcloud.platform.iam.model.Role;
-import cm.amcloud.platform.iam.model.RefreshToken; // Import RefreshToken
-import cm.amcloud.platform.iam.model.User;
-import cm.amcloud.platform.iam.repository.EmailVerificationTokenRepository;
-import cm.amcloud.platform.iam.repository.RoleRepository;
-import cm.amcloud.platform.iam.repository.UserRepository;
-import cm.amcloud.platform.iam.repository.RefreshTokenRepository; // Import RefreshTokenRepository
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import cm.amcloud.platform.iam.dto.RegisterRequest;
+import cm.amcloud.platform.iam.model.EmailVerificationToken;
+import cm.amcloud.platform.iam.model.PasswordResetToken;
+import cm.amcloud.platform.iam.model.RefreshToken;
+import cm.amcloud.platform.iam.model.Role;
+import cm.amcloud.platform.iam.model.User;
+import cm.amcloud.platform.iam.repository.EmailVerificationTokenRepository;
+import cm.amcloud.platform.iam.repository.PasswordResetTokenRepository;
+import cm.amcloud.platform.iam.repository.RefreshTokenRepository;
+import cm.amcloud.platform.iam.repository.RoleRepository;
+import cm.amcloud.platform.iam.repository.UserRepository;
 
 @Service
 public class UserService {
@@ -29,28 +31,33 @@ public class UserService {
     private final PasswordValidationService passwordValidationService;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
     private final RoleRepository roleRepository;
-    private final RefreshTokenRepository refreshTokenRepository; // Inject RefreshTokenRepository
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
 
     @Value("${account.lockout.max-attempts:2}")
     private int maxFailedAttempts;
 
-    @Value("${account.lockout.duration-minutes:2}")
+    @Value("${account.lockout.duration-minutes:1440}")
     private int lockoutDurationMinutes;
+
+    @Value("${password.reset.token-expiration-hours:1}")
+    private int passwordResetTokenExpirationHours;
 
     public UserService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        PasswordValidationService passwordValidationService,
                        EmailVerificationTokenRepository emailVerificationTokenRepository,
                        RoleRepository roleRepository,
-                       RefreshTokenRepository refreshTokenRepository) { // Add RefreshTokenRepository to constructor
+                       RefreshTokenRepository refreshTokenRepository,
+                       PasswordResetTokenRepository passwordResetTokenRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.passwordValidationService = passwordValidationService;
         this.emailVerificationTokenRepository = emailVerificationTokenRepository;
         this.roleRepository = roleRepository;
-        this.refreshTokenRepository = refreshTokenRepository; // Initialize RefreshTokenRepository
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
     }
-
 
     /**
      * Registers a new user, hashes their password, and generates an email verification token.
@@ -103,6 +110,9 @@ public class UserService {
         verificationToken.setCreatedAt(LocalDateTime.now());
 
         emailVerificationTokenRepository.save(verificationToken);
+
+        // TODO: Envoyer l'e-mail de vérification via le service de notification
+        // notificationService.sendVerificationEmail(savedUser.getEmail(), verificationToken.getToken());
 
         return savedUser;
     }
@@ -179,5 +189,77 @@ public class UserService {
 
         refreshToken.setRevokedAt(LocalDateTime.now());
         refreshTokenRepository.save(refreshToken);
+    }
+
+    /**
+     * Creates a new password reset token for the given user email.
+     * If an existing token for the user is found, it is invalidated.
+     *
+     * @param email The email of the user requesting a password reset.
+     * @return The generated password reset token string.
+     * @throws IllegalArgumentException if the user is not found or is disabled.
+     */
+    @Transactional
+    public String createPasswordResetToken(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User with this email not found."));
+
+        if (!user.isEnabled()) {
+            throw new IllegalArgumentException("User account is disabled.");
+        }
+
+        // Invalidate any existing password reset tokens for this user
+        passwordResetTokenRepository.deleteByUser(user);
+
+        PasswordResetToken resetToken = new PasswordResetToken();
+        resetToken.setToken(UUID.randomUUID().toString());
+        resetToken.setUser(user);
+        resetToken.setExpiresAt(LocalDateTime.now().plusHours(passwordResetTokenExpirationHours)); // Configurable expiration
+        passwordResetTokenRepository.save(resetToken);
+
+        // TODO: Envoyer l'e-mail de réinitialisation de mot de passe via le service de notification
+        // notificationService.sendPasswordResetEmail(user.getEmail(), resetToken.getToken());
+
+        return resetToken.getToken();
+    }
+
+    /**
+     * Resets the user's password using a valid password reset token.
+     *
+     * @param tokenString The password reset token.
+     * @param newPassword The new raw password.
+     * @param confirmNewPassword The confirmation of the new raw password.
+     * @throws IllegalArgumentException if token is invalid/expired/used, passwords don't match, or password policy not met.
+     */
+    @Transactional
+    public void resetPassword(String tokenString, String newPassword, String confirmNewPassword) {
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(tokenString)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid password reset token."));
+
+        if (resetToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Password reset token has expired.");
+        }
+
+        if (resetToken.getUsedAt() != null) {
+            throw new IllegalArgumentException("Password reset token has already been used.");
+        }
+
+        if (!newPassword.equals(confirmNewPassword)) {
+            throw new IllegalArgumentException("New password and confirmation do not match.");
+        }
+
+        passwordValidationService.validatePassword(newPassword); // Validate new password against policy
+
+        User user = resetToken.getUser();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        // Mark the token as used
+        resetToken.setUsedAt(LocalDateTime.now());
+        passwordResetTokenRepository.save(resetToken);
+
+        // Optionally, revoke all refresh tokens for this user for security after password change
+        refreshTokenRepository.deleteByUser(user);
     }
 }

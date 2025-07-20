@@ -1,5 +1,7 @@
 package cm.amcloud.platform.iam.dto;
+import lombok.Data; 
 
+@Data 
 public class AuthResponse {
     private String accessToken; 
     private String refreshToken;
@@ -9,20 +11,4 @@ public class AuthResponse {
         this.refreshToken = refreshToken;
     }
 
-    // Getters
-    public String getAccessToken() {
-        return accessToken;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setAccessToken(String accessToken) {
-        this.accessToken = accessToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
-    }
 }
