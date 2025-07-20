@@ -36,6 +36,7 @@ public class SecurityConfig {
                         "/auth/forgot-password", 
                         "/auth/reset-password",
                         "/.well-known/openid-configuration", 
+                        "/auth/verify-email",
                         "/jwks.json", 
                         "/test/public/**").permitAll()
                         // Permit access to Springdoc/Swagger UI endpoints

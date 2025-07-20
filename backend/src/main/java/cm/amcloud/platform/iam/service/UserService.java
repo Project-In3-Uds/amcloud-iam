@@ -33,6 +33,7 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final NotificationService notificationService;
 
     @Value("${account.lockout.max-attempts:2}")
     private int maxFailedAttempts;
@@ -49,7 +50,8 @@ public class UserService {
                        EmailVerificationTokenRepository emailVerificationTokenRepository,
                        RoleRepository roleRepository,
                        RefreshTokenRepository refreshTokenRepository,
-                       PasswordResetTokenRepository passwordResetTokenRepository) {
+                       PasswordResetTokenRepository passwordResetTokenRepository,
+                       NotificationService notificationService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.passwordValidationService = passwordValidationService;
@@ -57,6 +59,7 @@ public class UserService {
         this.roleRepository = roleRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -111,8 +114,7 @@ public class UserService {
 
         emailVerificationTokenRepository.save(verificationToken);
 
-        // TODO: Envoyer l'e-mail de vérification via le service de notification
-        // notificationService.sendVerificationEmail(savedUser.getEmail(), verificationToken.getToken());
+        notificationService.sendVerificationEmail(savedUser.getEmail(), verificationToken.getToken());
 
         return savedUser;
     }
@@ -214,11 +216,10 @@ public class UserService {
         PasswordResetToken resetToken = new PasswordResetToken();
         resetToken.setToken(UUID.randomUUID().toString());
         resetToken.setUser(user);
-        resetToken.setExpiresAt(LocalDateTime.now().plusHours(passwordResetTokenExpirationHours)); // Configurable expiration
+        resetToken.setExpiresAt(LocalDateTime.now().plusHours(passwordResetTokenExpirationHours));
         passwordResetTokenRepository.save(resetToken);
 
-        // TODO: Envoyer l'e-mail de réinitialisation de mot de passe via le service de notification
-        // notificationService.sendPasswordResetEmail(user.getEmail(), resetToken.getToken());
+        notificationService.sendPasswordResetEmail(user.getEmail(), resetToken.getToken());
 
         return resetToken.getToken();
     }
@@ -248,7 +249,7 @@ public class UserService {
             throw new IllegalArgumentException("New password and confirmation do not match.");
         }
 
-        passwordValidationService.validatePassword(newPassword); // Validate new password against policy
+        passwordValidationService.validatePassword(newPassword);
 
         User user = resetToken.getUser();
         user.setPassword(passwordEncoder.encode(newPassword));
@@ -259,7 +260,40 @@ public class UserService {
         resetToken.setUsedAt(LocalDateTime.now());
         passwordResetTokenRepository.save(resetToken);
 
-        // Optionally, revoke all refresh tokens for this user for security after password change
+        // Revoke all refresh tokens for this user for security after password change
         refreshTokenRepository.deleteByUser(user);
+    }
+
+    /**
+     * Verifies an email using a provided token.
+     *
+     * @param tokenString The email verification token.
+     * @throws IllegalArgumentException if the token is invalid, expired, or already used.
+     */
+    @Transactional
+    public void verifyEmail(String tokenString) {
+        EmailVerificationToken verificationToken = emailVerificationTokenRepository.findByToken(tokenString)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid email verification token."));
+
+        if (verificationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Email verification token has expired.");
+        }
+
+        if (verificationToken.getVerifiedAt() != null) {
+            throw new IllegalArgumentException("Email verification token has already been used.");
+        }
+
+        User user = verificationToken.getUser();
+        if (user == null) {
+            throw new IllegalArgumentException("Associated user not found for this token.");
+        }
+
+        user.setEnabled(true); // Enable the user account
+        user.setStatus("ACTIVE"); // Set status to ACTIVE
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        verificationToken.setVerifiedAt(LocalDateTime.now()); // Mark token as used
+        emailVerificationTokenRepository.save(verificationToken);
     }
 }

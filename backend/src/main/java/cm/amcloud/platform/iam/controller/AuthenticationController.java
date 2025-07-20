@@ -13,10 +13,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import cm.amcloud.platform.iam.dto.AuthRequest;
-import cm.amcloud.platform.iam.dto.AuthResponse;
+import cm.amcloud.platform.iam.dto.AuthResponse; // Import for @RequestParam
 import cm.amcloud.platform.iam.dto.ForgotPasswordRequest;
 import cm.amcloud.platform.iam.dto.RegisterRequest;
 import cm.amcloud.platform.iam.dto.ResetPasswordRequest;
@@ -30,7 +31,7 @@ import cm.amcloud.platform.iam.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse; // Assurez-vous que cet import est présent
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 
@@ -57,7 +58,7 @@ public class AuthenticationController {
             @ApiResponse(responseCode = "401", description = "Invalid credentials or account locked")
     })
     @PostMapping("/login")
-    public AuthResponse login(@Valid @RequestBody AuthRequest request) { 
+    public AuthResponse login(@Valid @RequestBody AuthRequest request) {
         User user = null;
         try {
             user = userService.findByUsername(request.getUsername());
@@ -117,6 +118,24 @@ public class AuthenticationController {
         }
     }
 
+    @Operation(summary = "Verify user email with a token")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Email verified successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid, expired, or already used token")
+    })
+    @GetMapping("/verify-email") // Endpoint pour la vérification d'e-mail
+    public ResponseEntity<String> verifyEmail(@RequestParam("token") String token) {
+        try {
+            userService.verifyEmail(token);
+            return new ResponseEntity<>("Votre e-mail a été vérifié avec succès. Votre compte est maintenant actif !", HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Une erreur inattendue est survenue lors de la vérification de l'e-mail.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @Operation(summary = "Renew Access Token using a Refresh Token")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Tokens refreshed successfully",
@@ -125,7 +144,6 @@ public class AuthenticationController {
     })
     @PostMapping("/refresh-token")
     public AuthResponse refreshToken(@RequestBody Map<String, String> request) {
-        // Note: Validation for refreshToken is done manually here as it's a simple String in a Map
         String refreshTokenString = request.get("refreshToken");
 
         if (refreshTokenString == null || refreshTokenString.isBlank()) {
@@ -175,7 +193,6 @@ public class AuthenticationController {
     })
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@RequestBody Map<String, String> request) {
-        // Note: Validation for refreshToken is done manually here as it's a simple String in a Map
         String refreshTokenString = request.get("refreshToken");
 
         if (refreshTokenString == null || refreshTokenString.isBlank()) {
@@ -199,7 +216,7 @@ public class AuthenticationController {
             @ApiResponse(responseCode = "400", description = "Invalid email or user not found/disabled")
     })
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) { 
+    public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         try {
             userService.createPasswordResetToken(request.getEmail());
             return new ResponseEntity<>("Un e-mail de réinitialisation de mot de passe a été envoyé à votre adresse.", HttpStatus.OK);
@@ -217,7 +234,7 @@ public class AuthenticationController {
             @ApiResponse(responseCode = "400", description = "Invalid token, passwords mismatch, or password policy not met")
     })
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) { 
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         try {
             userService.resetPassword(request.getToken(), request.getNewPassword(), request.getConfirmNewPassword());
             return new ResponseEntity<>("Le mot de passe a été réinitialisé avec succès.", HttpStatus.OK);

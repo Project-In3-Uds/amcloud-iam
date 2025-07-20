@@ -19,10 +19,14 @@ POST http://localhost:8081/auth/register
 Content-Type: application/json
 
 {
-"username": "test13",
-"email": "test123@example.com",
+"username": "omega",
+"email": "andersonmetsanoum@gmail.com",
 "password": "Password123@1"
 }
+
+####
+#Vérifier l'e-mail avec le token
+GET http://localhost:8081/auth/verify-email?token={{email_verification_token}}
 
 ###
 POST http://localhost:8081/auth/refresh-token
@@ -52,7 +56,7 @@ POST http://localhost:8081/auth/forgot-password
 Content-Type: application/json
 
 {
-"email": "test123@example.com"
+"email": "andersonmetsanoum@gmail.com"
 }
 
 {%
