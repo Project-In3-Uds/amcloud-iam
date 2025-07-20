@@ -26,7 +26,7 @@ Content-Type: application/json
 
 ####
 #Vérifier l'e-mail avec le token
-GET http://localhost:8081/auth/verify-email?token={{email_verification_token}}
+GET http://localhost:8081/auth/verify-email?token=1b1afd07-368e-4eda-aca8-511fd2c59b89
 
 ###
 POST http://localhost:8081/auth/refresh-token
@@ -81,7 +81,7 @@ POST http://localhost:8081/auth/reset-password
 Content-Type: application/json
 
 {
-"token": "{{reset_password_token}}",
+"token": "378768db-d350-4a46-bf92-6a70f2ba7a8c",
 "newPassword": "NewStrongPassword1!",
 "confirmNewPassword": "NewStrongPassword1!"
 }

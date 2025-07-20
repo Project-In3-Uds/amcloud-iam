@@ -12,8 +12,10 @@ import org.springframework.web.client.RestTemplate;
 
 /**
  * Service de notification qui agit comme un client HTTP pour un microservice de notification externe.
- * Il envoie des requêtes pour l'envoi d'e-mails de vérification et de réinitialisation de mot de passe
- * en s'alignant sur l'API générique de notification du microservice externe.
+ * Il envoie des requêtes pour l'envoi d'e-mails de vérification et de réinitialisation de mot de passe.
+ *
+  TODO: Migrer vers une communication asynchrone via un broker de messages (ex: RabbitMQ/Kafka)
+ * et intégrer un service de découverte (ex: Eureka) pour une architecture de microservices plus robuste.
  */
 @Service
 public class NotificationService {
