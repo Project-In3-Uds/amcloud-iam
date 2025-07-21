@@ -3,7 +3,7 @@ package cm.amcloud.platform.iam.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.ResponseEntity; // Import UserRoleAssignmentRequest
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,10 +12,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController; // Pour les annotations de sécurité
+import org.springframework.web.bind.annotation.RestController;
 
-import cm.amcloud.platform.iam.dto.UserRequest;
+import cm.amcloud.platform.iam.dto.UserRequest; // Pour les annotations de sécurité
 import cm.amcloud.platform.iam.dto.UserResponse;
+import cm.amcloud.platform.iam.dto.UserRoleAssignmentRequest;
 import cm.amcloud.platform.iam.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -62,6 +63,19 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    @Operation(summary = "Récupère tous les utilisateurs (ADMIN seulement)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Liste des utilisateurs récupérée avec succès",
+                    content = @Content(schema = @Schema(implementation = UserResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Accès refusé")
+    })
+    @GetMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<List<UserResponse>> getAllUsers() {
+        List<UserResponse> users = userService.getAllUsers();
+        return ResponseEntity.ok(users);
+    }
+
     @Operation(summary = "Met à jour un utilisateur par ID (ADMIN seulement)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Utilisateur mis à jour avec succès",
@@ -90,10 +104,20 @@ public class UserController {
         return ResponseEntity.noContent().build(); // 204 No Content
     }
 
-      @GetMapping
-     @PreAuthorize("hasRole('ROLE_ADMIN')")
-     public ResponseEntity<List<UserResponse>> getAllUsers() {
-         List<UserResponse> users = userService.getAllUsers();  
-         return ResponseEntity.ok(users);
-     }
+    @Operation(summary = "Attribue des rôles à un utilisateur (ADMIN seulement)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Rôles attribués avec succès",
+                    content = @Content(schema = @Schema(implementation = UserResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Données d'entrée invalides"),
+            @ApiResponse(responseCode = "404", description = "Utilisateur ou rôle non trouvé"),
+            @ApiResponse(responseCode = "403", description = "Accès refusé")
+    })
+    @PostMapping(value = "/{userId}/assign-roles") 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<UserResponse> assignRolesToUser(
+            @PathVariable Long userId,
+            @Valid @RequestBody UserRoleAssignmentRequest request) {
+        UserResponse updatedUser = userService.assignRolesToUser(userId, request);
+        return ResponseEntity.ok(updatedUser);
+    }
 }

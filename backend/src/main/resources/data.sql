@@ -1,5 +1,6 @@
--- Ensure the public schema is selected for operations
-SET search_path TO public;
+-- Création d'un Realm par défaut
+INSERT INTO realms (id, name, description, created_at, updated_at) VALUES
+(1, 'master', 'Realm principal pour l''administration du système IAM.', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Création d'un utilisateur admin
 INSERT INTO users (
@@ -38,9 +39,9 @@ INSERT INTO role_permissions (role_id, permission_id) VALUES
 -- Assurez-vous que ROLE_USER a aussi des permissions si vous en avez besoin, par exemple:
 -- INSERT INTO role_permissions (role_id, permission_id) VALUES (2, 1); -- ROLE_USER a PERM_READ
 
+-- Reset the sequence for the realms table's ID column
+SELECT setval('realms_id_seq', (SELECT MAX(id) FROM realms), true);
 -- Reset the sequence for the users table's ID column
--- This ensures that new auto-generated IDs start after the manually inserted ones.
--- CHANGÉ : Utilisation de 'true' pour que la prochaine valeur générée soit MAX(id) + 1
 SELECT setval('users_id_seq', (SELECT MAX(id) FROM users), true);
 -- Reset the sequence for the roles table's ID column
 SELECT setval('roles_id_seq', (SELECT MAX(id) FROM roles), true);

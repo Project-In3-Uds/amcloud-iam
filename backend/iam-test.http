@@ -4,8 +4,8 @@ POST http://localhost:8081/v1/auth/login
 Content-Type: application/json
 
 {
-"username": "admin",
-"password": "adminpass"
+"username": "newuser",
+"password": "NewSecurePassword1!"
 }
 
 {%
@@ -114,14 +114,14 @@ Accept: application/json
 # Créer un nouvel utilisateur (par ADMIN)
 POST http://localhost:8080/v1/users
 Content-Type: application/json
-Authorization: Bearer eyJraWQiOiJteS1rZXktaWQiLCJhbGciOiJSUzI1NiJ9.eyJyb2xlcyI6WyJST0xFX0FETUlOIl0sInNjb3BlcyI6WyJyZWFkIiwiZGVsZXRlIiwid3JpdGUiXSwic3ViIjoiYWRtaW4iLCJpYXQiOjE3NTMwNjYyNzQsImV4cCI6MTc1MzA2OTg3NCwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgxIn0.nHQ-YhBYeA9fjhQFWl27cW6QCXJnDPnqgQx7pxt_mj0Rrx-0rZpJWAqV7nWdNSNVmL-vayrcrvx5lVkaNOdDmopVFOYmxe2qnQAWQr-APLAqQ3q0PsUGAIuGD16Ps1dlwZEJsxnNR2tEYvB0d0Mkg4plxTXbLfnxAbvTPRkziC_xP8ThdqhuXNMTedY3tx6rcdR7zydNk7r87Vvj18WAcmt49EWZeh0tfNYr8vdqTks-8bnn0KUMo16lF6FxZWniTuwh7K0-9Bnq_b464V7ALclUzZIAYaxfC9OBIxA2e3G3EzB2MlgfKM0wxDEREBHbgYgmrevCLmKKzMYIdChzTQ
+Authorization: Bearer eyJraWQiOiJteS1rZXktaWQiLCJhbGciOiJSUzI1NiJ9.eyJyb2xlcyI6WyJST0xFX0FETUlOIl0sInNjb3BlcyI6WyJyZWFkIiwiZGVsZXRlIiwid3JpdGUiXSwic3ViIjoiYWRtaW4iLCJpYXQiOjE3NTMwNzA1MDIsImV4cCI6MTc1MzA3NDEwMiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgxIn0.mNl-bl4Quiqzcm7i0EMrFggg7RWqLR8wOnM482y0Ch-I2AsYdYVP3ME6Ob6-46cLFh59LhZD5_INJAzOwIyu3GN9qyWP6R0XCoiWeQ7LHl5GIQnIHrzZKWUGhW0jwNZEoEmO3Db9Zjx_bJMDbVWOvPLiWQUSQJGtOaOt4Yg0omplc4VHStslbCXhN9o4XIkAk93yNcHV5qlo1gsue3BCi-LD9_Kgq5lQxc5nZFNOkVcPV1OkOLPUIHa5CqVDvUqifImkdhCNWbjwojish43dCTSiNmvN5o7xhvOLRgmxnnStL8TheZ16ZOY7G7EtRv_sJkESfUYyRL9N7C9CeYsdow
 
 {
 "username": "newuser",
 "email": "newuser@example.com",
 "password": "NewSecurePassword1!",
 "status": "ACTIVE",
-"roles": ["ROLE_ADMIN"]
+"roles": ["ROLE_USER"]
 }
 
 {%

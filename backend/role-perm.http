@@ -47,7 +47,7 @@ Content-Type: application/json
 Authorization: Bearer eyJraWQiOiJteS1rZXktaWQiLCJhbGciOiJSUzI1NiJ9.eyJyb2xlcyI6WyJST0xFX0FETUlOIl0sInNjb3BlcyI6WyJyZWFkIiwiZGVsZXRlIiwid3JpdGUiXSwic3ViIjoiYWRtaW4iLCJpYXQiOjE3NTMwNjYyNzQsImV4cCI6MTc1MzA2OTg3NCwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgxIn0.nHQ-YhBYeA9fjhQFWl27cW6QCXJnDPnqgQx7pxt_mj0Rrx-0rZpJWAqV7nWdNSNVmL-vayrcrvx5lVkaNOdDmopVFOYmxe2qnQAWQr-APLAqQ3q0PsUGAIuGD16Ps1dlwZEJsxnNR2tEYvB0d0Mkg4plxTXbLfnxAbvTPRkziC_xP8ThdqhuXNMTedY3tx6rcdR7zydNk7r87Vvj18WAcmt49EWZeh0tfNYr8vdqTks-8bnn0KUMo16lF6FxZWniTuwh7K0-9Bnq_b464V7ALclUzZIAYaxfC9OBIxA2e3G3EzB2MlgfKM0wxDEREBHbgYgmrevCLmKKzMYIdChzTQ
 
 {
-"name": "ROLE_MANAGER",
+"name": "ROLE_SUPERVISOR",
 "description": "Rôle pour les gestionnaires.",
 "permissionNames": ["PERM_READ", "PERM_WRITE"]
 }
@@ -85,7 +85,7 @@ Authorization: Bearer eyJraWQiOiJteS1rZXktaWQiLCJhbGciOiJSUzI1NiJ9.eyJyb2xlcyI6W
 ###
 ### Attribuer des rôles à un utilisateur (par ADMIN)
 ## Assurez-vous que new_user_id et les rôles existent
-POST http://localhost:8080/v1/users/1/assign-roles
+POST http://localhost:8080/v1/users/2/assign-roles
 Content-Type: application/json
 Authorization: Bearer eyJraWQiOiJteS1rZXktaWQiLCJhbGciOiJSUzI1NiJ9.eyJyb2xlcyI6WyJST0xFX0FETUlOIl0sInNjb3BlcyI6WyJyZWFkIiwiZGVsZXRlIiwid3JpdGUiXSwic3ViIjoiYWRtaW4iLCJpYXQiOjE3NTMwNjYyNzQsImV4cCI6MTc1MzA2OTg3NCwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgxIn0.nHQ-YhBYeA9fjhQFWl27cW6QCXJnDPnqgQx7pxt_mj0Rrx-0rZpJWAqV7nWdNSNVmL-vayrcrvx5lVkaNOdDmopVFOYmxe2qnQAWQr-APLAqQ3q0PsUGAIuGD16Ps1dlwZEJsxnNR2tEYvB0d0Mkg4plxTXbLfnxAbvTPRkziC_xP8ThdqhuXNMTedY3tx6rcdR7zydNk7r87Vvj18WAcmt49EWZeh0tfNYr8vdqTks-8bnn0KUMo16lF6FxZWniTuwh7K0-9Bnq_b464V7ALclUzZIAYaxfC9OBIxA2e3G3EzB2MlgfKM0wxDEREBHbgYgmrevCLmKKzMYIdChzTQ
 
