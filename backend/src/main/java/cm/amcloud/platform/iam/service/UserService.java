@@ -1,12 +1,12 @@
 package cm.amcloud.platform.iam.service;
 
 import java.time.LocalDateTime;
-import java.util.HashSet; // Import UserRequest
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional; // Import UserResponse
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors; // Import Permission
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import cm.amcloud.platform.iam.dto.RegisterRequest;
 import cm.amcloud.platform.iam.dto.UserRequest;
 import cm.amcloud.platform.iam.dto.UserResponse;
+import cm.amcloud.platform.iam.dto.UserRoleAssignmentRequest;
 import cm.amcloud.platform.iam.model.EmailVerificationToken;
 import cm.amcloud.platform.iam.model.PasswordResetToken;
 import cm.amcloud.platform.iam.model.Permission;
@@ -25,7 +26,7 @@ import cm.amcloud.platform.iam.model.User;
 import cm.amcloud.platform.iam.repository.EmailVerificationTokenRepository;
 import cm.amcloud.platform.iam.repository.PasswordResetTokenRepository;
 import cm.amcloud.platform.iam.repository.RefreshTokenRepository;
-import cm.amcloud.platform.iam.repository.RoleRepository;
+import cm.amcloud.platform.iam.repository.RoleRepository; // Import UUID
 import cm.amcloud.platform.iam.repository.UserRepository;
 
 @Service
@@ -366,6 +367,17 @@ public class UserService {
     }
 
     /**
+     * Récupère tous les utilisateurs.
+     *
+     * @return Une liste de UserResponse.
+     */
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(this::convertToUserResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Met à jour les informations d'un utilisateur existant.
      *
      * @param id L'ID de l'utilisateur à mettre à jour.
@@ -438,9 +450,34 @@ public class UserService {
         // Supprimer les tokens de rafraîchissement et de réinitialisation de mot de passe associés
         refreshTokenRepository.deleteByUser(userToDelete);
         passwordResetTokenRepository.deleteByUser(userToDelete);
-        emailVerificationTokenRepository.deleteByUser(userToDelete);  
+        emailVerificationTokenRepository.deleteByUser(userToDelete); // Assurez-vous d'ajouter cette méthode au repo
 
         userRepository.delete(userToDelete);
+    }
+
+    /**
+     * Attribue des rôles à un utilisateur.
+     *
+     * @param userId L'ID de l'utilisateur.
+     * @param request La requête contenant les noms des rôles à attribuer.
+     * @return Le UserResponse de l'utilisateur mis à jour.
+     * @throws IllegalArgumentException si l'utilisateur ou un rôle n'est pas trouvé.
+     */
+    @Transactional
+    public UserResponse assignRolesToUser(Long userId, UserRoleAssignmentRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur non trouvé avec l'ID: " + userId));
+
+        Set<Role> rolesToAssign = new HashSet<>();
+        for (String roleName : request.getRoleNames()) {
+            roleRepository.findByName(roleName)
+                    .ifPresentOrElse(rolesToAssign::add, () -> {
+                        throw new IllegalArgumentException("Le rôle '" + roleName + "' n'existe pas.");
+                    });
+        }
+        user.setRoles(rolesToAssign); // Remplace les rôles existants
+        User updatedUser = userRepository.save(user);
+        return convertToUserResponse(updatedUser);
     }
 
     /**
@@ -469,7 +506,8 @@ public class UserService {
             // Mapper les noms des permissions (scopes)
             Set<String> permissions = user.getRoles().stream()
                     .flatMap(role -> role.getPermissions().stream())
-                    .map(Permission::getName) // Ou getScopeValue() si vous préférez les scopes bruts
+                    .map(Permission::getScopeValue) // Ou getScopeValue() si vous préférez les scopes bruts
+                    .filter(scope -> scope != null && !scope.isBlank())
                     .collect(Collectors.toSet());
             response.setPermissions(permissions);
         } else {
@@ -477,16 +515,5 @@ public class UserService {
             response.setPermissions(new HashSet<>());
         }
         return response;
-    }
-    /**
-     * Récupère tous les utilisateurs.
-     *
-     * @return Une liste de UserResponse pour tous les utilisateurs.
-     */
-    public List<UserResponse> getAllUsers() {
-        List<User> users = userRepository.findAll();
-        return users.stream()
-                .map(this::convertToUserResponse)
-                .collect(Collectors.toList()); 
     }
 }
