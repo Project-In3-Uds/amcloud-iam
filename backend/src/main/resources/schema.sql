@@ -32,7 +32,8 @@ CREATE TABLE users (
 -- Create roles table
 CREATE TABLE roles (
     id BIGSERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
+    name VARCHAR(255) NOT NULL,
+    description VARCHAR(500)
 );
 
 -- Create user_roles table
@@ -49,7 +50,8 @@ CREATE TABLE user_roles (
 CREATE TABLE permissions (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    scope_value VARCHAR(255)
+    scope_value VARCHAR(255),
+    description VARCHAR(500)
 );
 
 -- Create role_permissions table

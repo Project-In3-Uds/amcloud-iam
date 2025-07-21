@@ -26,6 +26,9 @@ public class Permission {
 
     @Column(name = "scope_value") 
     private String scopeValue;
+    
+    @Column(length = 500)  
+    private String description;
 
     @ManyToMany(mappedBy = "permissions")
     private Set<Role> roles;

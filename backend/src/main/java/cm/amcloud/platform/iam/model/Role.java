@@ -18,7 +18,7 @@ import lombok.EqualsAndHashCode;
 @Entity
 @Data
 @Table(name = "roles")
-@EqualsAndHashCode(exclude = "users") 
+@EqualsAndHashCode(exclude = "users") // Exclure 'users' pour éviter les boucles infinies dans toString/hashCode
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,15 +27,17 @@ public class Role {
     @Column(nullable = false, unique = true)
     private String name;
 
+    @Column(length = 500)  
+    private String description;
+
     @ManyToMany(mappedBy = "roles")
     private Set<User> users;
 
-    @ManyToMany(fetch = FetchType.EAGER) // Fetch permissions eagerly or lazily as per need
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "role_permissions",
             joinColumns = @JoinColumn(name = "role_id"),
             inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
-    private Set<Permission> permissions;  
-
+    private Set<Permission> permissions;
 }

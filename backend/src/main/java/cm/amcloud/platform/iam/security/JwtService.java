@@ -5,10 +5,12 @@ import java.security.PrivateKey;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set; // Import for Set
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +19,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
+import io.jsonwebtoken.Claims; // Import Claims
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
@@ -27,7 +30,7 @@ public class JwtService {
     private final String issuerUri;
     private final String keyId;
     private final UserDetailsService userDetailsService;
-    private final KeyPair keyPair;
+    private final KeyPair keyPair; // Garder KeyPair pour la clé publique de validation
 
     @Value("${jwt.access-token.expiration-seconds:3600}")
     private long accessTokenExpirationSeconds;
@@ -62,8 +65,12 @@ public class JwtService {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
 
-        // Extraire les scopes de CustomUserDetails
-        Set<String> scopes = ((CustomUserDetails) userDetails).getScopes();
+        // Extraire les scopes de CustomUserDetails (assurez-vous que CustomUserDetails est bien un CustomUserDetails)
+        Set<String> scopes = new HashSet<>();
+        if (userDetails instanceof CustomUserDetails) {
+            scopes = ((CustomUserDetails) userDetails).getScopes();
+        }
+
 
         Map<String, Object> claims = new HashMap<>();
         claims.put("roles", roles);
@@ -106,18 +113,53 @@ public class JwtService {
     }
 
     /**
-     * Extrait le sujet d'un token JWT.
+     * Extrait le nom d'utilisateur (subject) d'un token JWT.
      *
      * @param token La chaîne du token JWT.
-     * @return Le sujet (nom d'utilisateur) extrait du token.
+     * @return Le nom d'utilisateur extrait du token.
      */
-    public String extractSubject(String token) {
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    /**
+     * Extrait une revendication spécifique d'un token JWT.
+     *
+     * @param token La chaîne du token JWT.
+     * @param claimsResolver Une fonction pour résoudre la revendication.
+     * @param <T> Le type de la revendication.
+     * @return La revendication extraite.
+     */
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    /**
+     * Extrait toutes les revendications d'un token JWT.
+     *
+     * @param token La chaîne du token JWT.
+     * @return Les revendications du token.
+     */
+    private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(keyPair.getPublic())
+                .setSigningKey(keyPair.getPublic()) // Utilise la clé publique pour la vérification
                 .build()
                 .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+                .getBody();
+    }
+
+    /**
+     * Valide si un token JWT est valide pour un utilisateur donné.
+     * Vérifie le nom d'utilisateur et l'expiration du token.
+     *
+     * @param token La chaîne du token JWT.
+     * @param userDetails Les détails de l'utilisateur.
+     * @return true si le token est valide, false sinon.
+     */
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        final String username = extractUsername(token);
+        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
     }
 
     /**
@@ -127,12 +169,6 @@ public class JwtService {
      * @return true si le token est expiré, false sinon.
      */
     public boolean isTokenExpired(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(keyPair.getPublic())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getExpiration()
-                .before(Date.from(Instant.now()));
+        return extractClaim(token, Claims::getExpiration).before(Date.from(Instant.now()));
     }
 }

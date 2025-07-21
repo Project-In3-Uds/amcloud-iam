@@ -6,44 +6,62 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain; // Import this
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import cm.amcloud.platform.iam.security.CustomUserDetailsService;
+import cm.amcloud.platform.iam.security.GatewayHeaderAuthenticationFilter; 
 
 @Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
+    private final GatewayHeaderAuthenticationFilter gatewayHeaderAuthenticationFilter; // Injection du nouveau filtre
 
-    public SecurityConfig(CustomUserDetailsService userDetailsService) {
+    public SecurityConfig(CustomUserDetailsService userDetailsService, GatewayHeaderAuthenticationFilter gatewayHeaderAuthenticationFilter) {
         this.userDetailsService = userDetailsService;
+        this.gatewayHeaderAuthenticationFilter = gatewayHeaderAuthenticationFilter; // Initialisation
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .csrf(AbstractHttpConfigurer::disable) 
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // Permit access to your public endpoints
-                        .requestMatchers("/auth/login",
-                        "/auth/register",
-                        "/auth/refresh-token",
-                        "/auth/logout", 
-                        "/auth/forgot-password", 
-                        "/auth/reset-password",
-                        "/.well-known/openid-configuration", 
-                        "/auth/verify-email",
-                        "/jwks.json", 
-                        "/test/public/**").permitAll()
-                        // Permit access to Springdoc/Swagger UI endpoints
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**").permitAll() 
-                        // All other requests require authentication
+                        // Permettre l'accès aux endpoints publics d'authentification, de rafraîchissement, de déconnexion,
+                        // de réinitialisation de mot de passe et de vérification d'e-mail.
+                        .requestMatchers(
+                                "/v1/auth/login",
+                                "/v1/auth/register",
+                                "/v1/auth/refresh-token",
+                                "/v1/auth/logout",
+                                "/v1/auth/forgot-password",
+                                "/v1/auth/reset-password",
+                                "/v1/auth/verify-email",
+                                "/.well-known/openid-configuration",
+                                "/jwks.json",
+                                "/test/public/**"
+                        ).permitAll()
+                        // Permettre l'accès aux endpoints Springdoc/Swagger UI
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**").permitAll()
+                        // Toutes les autres requêtes nécessitent une authentification
                         .anyRequest().authenticated()
                 )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) 
+                )
+                .authenticationProvider(authenticationProvider())
+                // Ajouter le nouveau filtre qui lit les en-têtes de la passerelle
+                .addFilterBefore(gatewayHeaderAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 

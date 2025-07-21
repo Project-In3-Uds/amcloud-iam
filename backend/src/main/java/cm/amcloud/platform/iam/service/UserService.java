@@ -1,10 +1,12 @@
 package cm.amcloud.platform.iam.service;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Optional;
+import java.util.HashSet; // Import UserRequest
+import java.util.List;
+import java.util.Optional; // Import UserResponse
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors; // Import Permission
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,8 +14,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import cm.amcloud.platform.iam.dto.RegisterRequest;
+import cm.amcloud.platform.iam.dto.UserRequest;
+import cm.amcloud.platform.iam.dto.UserResponse;
 import cm.amcloud.platform.iam.model.EmailVerificationToken;
 import cm.amcloud.platform.iam.model.PasswordResetToken;
+import cm.amcloud.platform.iam.model.Permission;
 import cm.amcloud.platform.iam.model.RefreshToken;
 import cm.amcloud.platform.iam.model.Role;
 import cm.amcloud.platform.iam.model.User;
@@ -295,5 +300,193 @@ public class UserService {
 
         verificationToken.setVerifiedAt(LocalDateTime.now()); // Mark token as used
         emailVerificationTokenRepository.save(verificationToken);
+    }
+
+    /**
+     * Crée un nouvel utilisateur avec les rôles spécifiés.
+     *
+     * @param userRequest Les détails de l'utilisateur à créer.
+     * @return Le UserResponse de l'utilisateur créé.
+     * @throws IllegalArgumentException si le nom d'utilisateur ou l'e-mail existe déjà, ou si la politique de mot de passe n'est pas respectée.
+     */
+    @Transactional
+    public UserResponse createUser(UserRequest userRequest) {
+        if (userRepository.findByUsername(userRequest.getUsername()).isPresent()) {
+            throw new IllegalArgumentException("Le nom d'utilisateur existe déjà.");
+        }
+        if (userRepository.findByEmail(userRequest.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("L'e-mail est déjà enregistré.");
+        }
+        if (userRequest.getPassword() == null || userRequest.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Le mot de passe ne peut pas être vide pour la création d'utilisateur.");
+        }
+
+        passwordValidationService.validatePassword(userRequest.getPassword());
+
+        User newUser = new User();
+        newUser.setUsername(userRequest.getUsername());
+        newUser.setEmail(userRequest.getEmail());
+        newUser.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+        newUser.setStatus(userRequest.getStatus() != null ? userRequest.getStatus() : "ACTIVE"); // Par défaut 'ACTIVE' si non spécifié
+        newUser.setEnabled(true); // Toujours activé par défaut pour les créations admin
+        newUser.setCreatedAt(LocalDateTime.now());
+        newUser.setUpdatedAt(LocalDateTime.now());
+        newUser.setFailedAttempts(0);
+        newUser.setLockoutTime(null);
+
+        Set<Role> roles = new HashSet<>();
+        if (userRequest.getRoles() != null && !userRequest.getRoles().isEmpty()) {
+            for (String roleName : userRequest.getRoles()) {
+                roleRepository.findByName(roleName)
+                        .ifPresentOrElse(roles::add, () -> {
+                            throw new IllegalArgumentException("Le rôle '" + roleName + "' n'existe pas.");
+                        });
+            }
+        } else {
+            // Assigner un rôle par défaut si aucun n'est spécifié, par exemple ROLE_USER
+            roleRepository.findByName("ROLE_USER").ifPresent(roles::add);
+        }
+        newUser.setRoles(roles);
+
+        User savedUser = userRepository.save(newUser);
+        return convertToUserResponse(savedUser);
+    }
+
+    /**
+     * Récupère un utilisateur par son ID.
+     *
+     * @param id L'ID de l'utilisateur.
+     * @return Le UserResponse de l'utilisateur trouvé.
+     * @throws IllegalArgumentException si l'utilisateur n'est pas trouvé.
+     */
+    public UserResponse getUserById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur non trouvé avec l'ID: " + id));
+        return convertToUserResponse(user);
+    }
+
+    /**
+     * Met à jour les informations d'un utilisateur existant.
+     *
+     * @param id L'ID de l'utilisateur à mettre à jour.
+     * @param userRequest Les nouvelles informations de l'utilisateur.
+     * @return Le UserResponse de l'utilisateur mis à jour.
+     * @throws IllegalArgumentException si l'utilisateur n'est pas trouvé, ou si l'e-mail/nom d'utilisateur est déjà pris.
+     */
+    @Transactional
+    public UserResponse updateUser(Long id, UserRequest userRequest) {
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur non trouvé avec l'ID: " + id));
+
+        // Vérifier si le nouvel e-mail est déjà pris par un autre utilisateur
+        if (userRequest.getEmail() != null && !userRequest.getEmail().equals(existingUser.getEmail())) {
+            if (userRepository.findByEmail(userRequest.getEmail()).isPresent()) {
+                throw new IllegalArgumentException("L'e-mail '" + userRequest.getEmail() + "' est déjà utilisé par un autre utilisateur.");
+            }
+            existingUser.setEmail(userRequest.getEmail());
+        }
+
+        // Vérifier si le nouveau nom d'utilisateur est déjà pris par un autre utilisateur
+        if (userRequest.getUsername() != null && !userRequest.getUsername().equals(existingUser.getUsername())) {
+            if (userRepository.findByUsername(userRequest.getUsername()).isPresent()) {
+                throw new IllegalArgumentException("Le nom d'utilisateur '" + userRequest.getUsername() + "' est déjà utilisé par un autre utilisateur.");
+            }
+            existingUser.setUsername(userRequest.getUsername());
+        }
+
+        // Mettre à jour le mot de passe si fourni
+        if (userRequest.getPassword() != null && !userRequest.getPassword().isBlank()) {
+            passwordValidationService.validatePassword(userRequest.getPassword());
+            existingUser.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+        }
+
+        // Mettre à jour le statut si fourni
+        if (userRequest.getStatus() != null && !userRequest.getStatus().isBlank()) {
+            existingUser.setStatus(userRequest.getStatus());
+            // Si le statut est DISABLED, désactiver le compte
+            existingUser.setEnabled(!userRequest.getStatus().equals("DISABLED"));
+        }
+
+        // Mettre à jour les rôles si fournis
+        if (userRequest.getRoles() != null) {
+            Set<Role> updatedRoles = new HashSet<>();
+            for (String roleName : userRequest.getRoles()) {
+                roleRepository.findByName(roleName)
+                        .ifPresentOrElse(updatedRoles::add, () -> {
+                            throw new IllegalArgumentException("Le rôle '" + roleName + "' n'existe pas.");
+                        });
+            }
+            existingUser.setRoles(updatedRoles);
+        }
+
+        existingUser.setUpdatedAt(LocalDateTime.now());
+        User updatedUser = userRepository.save(existingUser);
+        return convertToUserResponse(updatedUser);
+    }
+
+    /**
+     * Supprime un utilisateur par son ID.
+     *
+     * @param id L'ID de l'utilisateur à supprimer.
+     * @throws IllegalArgumentException si l'utilisateur n'est pas trouvé.
+     */
+    @Transactional
+    public void deleteUser(Long id) {
+        User userToDelete = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur non trouvé avec l'ID: " + id));
+        
+        // Supprimer les tokens de rafraîchissement et de réinitialisation de mot de passe associés
+        refreshTokenRepository.deleteByUser(userToDelete);
+        passwordResetTokenRepository.deleteByUser(userToDelete);
+        emailVerificationTokenRepository.deleteByUser(userToDelete);  
+
+        userRepository.delete(userToDelete);
+    }
+
+    /**
+     * Convertit une entité User en UserResponse DTO.
+     *
+     * @param user L'entité User à convertir.
+     * @return Le UserResponse DTO.
+     */
+    private UserResponse convertToUserResponse(User user) {
+        UserResponse response = new UserResponse();
+        response.setId(user.getId());
+        response.setUsername(user.getUsername());
+        response.setEmail(user.getEmail());
+        response.setStatus(user.getStatus());
+        response.setEnabled(user.isEnabled());
+        response.setCreatedAt(user.getCreatedAt());
+        response.setUpdatedAt(user.getUpdatedAt());
+        response.setLastLoginAt(user.getLastLoginAt());
+
+        // Mapper les noms des rôles
+        if (user.getRoles() != null) {
+            response.setRoles(user.getRoles().stream()
+                    .map(Role::getName)
+                    .collect(Collectors.toSet()));
+
+            // Mapper les noms des permissions (scopes)
+            Set<String> permissions = user.getRoles().stream()
+                    .flatMap(role -> role.getPermissions().stream())
+                    .map(Permission::getName) // Ou getScopeValue() si vous préférez les scopes bruts
+                    .collect(Collectors.toSet());
+            response.setPermissions(permissions);
+        } else {
+            response.setRoles(new HashSet<>());
+            response.setPermissions(new HashSet<>());
+        }
+        return response;
+    }
+    /**
+     * Récupère tous les utilisateurs.
+     *
+     * @return Une liste de UserResponse pour tous les utilisateurs.
+     */
+    public List<UserResponse> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        return users.stream()
+                .map(this::convertToUserResponse)
+                .collect(Collectors.toList()); 
     }
 }
