@@ -15,7 +15,7 @@ client.global.set("refresh_token", response.body.refreshToken);
 
 ###
 ## Enregistrer un nouvel utilisateur
-POST http://localhost:8081/auth/register
+POST http://localhost:8081/v1/auth/register
 Content-Type: application/json
 
 {
