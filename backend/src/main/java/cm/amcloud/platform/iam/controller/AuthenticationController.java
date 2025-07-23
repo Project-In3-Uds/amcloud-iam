@@ -104,8 +104,8 @@ public class AuthenticationController {
 
             response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-            // Retourner uniquement l'Access Token dans le corps de la réponse
-            return ResponseEntity.ok(new AuthResponse(accessToken));
+            // Retourner l'Access Token ET l'ID de l'utilisateur dans le corps de la réponse
+            return ResponseEntity.ok(new AuthResponse(accessToken, user.getId())); // <-- CHANGEMENT ICI
 
         } catch (BadCredentialsException e) {
             if (user != null) {
@@ -226,8 +226,8 @@ public class AuthenticationController {
 
             response.addHeader(HttpHeaders.SET_COOKIE, newRefreshCookie.toString());
 
-            // Retourner le nouvel Access Token dans le corps de la réponse
-            return ResponseEntity.ok(new AuthResponse(newAccessToken));
+            // Retourner le nouvel Access Token ET l'ID de l'utilisateur dans le corps de la réponse
+            return ResponseEntity.ok(new AuthResponse(newAccessToken, user.getId())); // <-- CHANGEMENT ICI
 
         } catch (InvalidCredentialsException e) {
             throw e;
@@ -270,9 +270,6 @@ public class AuthenticationController {
             return new ResponseEntity<>("Logout successful.", HttpStatus.OK);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<>("An unexpected error occurred during logout.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -288,9 +285,6 @@ public class AuthenticationController {
             return new ResponseEntity<>("Un e-mail de réinitialisation de mot de passe a été envoyé à votre adresse.", HttpStatus.OK);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<>("Une erreur inattendue est survenue lors de la demande de réinitialisation de mot de passe.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -306,9 +300,6 @@ public class AuthenticationController {
             return new ResponseEntity<>("Le mot de passe a été réinitialisé avec succès.", HttpStatus.OK);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<>("Une erreur inattendue est survenue lors de la réinitialisation du mot de passe.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

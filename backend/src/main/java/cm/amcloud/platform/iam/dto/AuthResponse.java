@@ -1,23 +1,31 @@
 package cm.amcloud.platform.iam.dto;
 
 public class AuthResponse {
-    private String accessToken; // Renamed from 'token' for clarity
-    // private String refreshToken; // Supprimé
+    private String accessToken;
+    private Long userId; // Nouveau champ pour l'ID de l'utilisateur
 
-    public AuthResponse(String accessToken) { // Constructeur mis à jour
+    public AuthResponse(String accessToken, Long userId) { // Constructeur mis à jour
         this.accessToken = accessToken;
+        this.userId = userId;
     }
 
-    // Getter
+    // Getter pour accessToken
     public String getAccessToken() {
         return accessToken;
     }
 
-    // Setter (optional, if you need to modify after creation, but usually DTOs are immutable)
+    // Setter pour accessToken (optionnel)
     public void setAccessToken(String accessToken) {
         this.accessToken = accessToken;
     }
 
-    // Supprimé: getRefreshToken()
-    // Supprimé: setRefreshToken()
+    // Getter pour userId
+    public Long getUserId() {
+        return userId;
+    }
+
+    // Setter pour userId (optionnel)
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 }

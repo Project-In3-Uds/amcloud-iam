@@ -3,15 +3,18 @@ import ReactDOM from 'react-dom/client';
 import './index.css'; // Assurez-vous que Tailwind est importé ici
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext'; // Importez NotificationProvider
 import { BrowserRouter as Router } from 'react-router-dom'; // Importez BrowserRouter
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
   <React.StrictMode>
-    <Router> {/* BrowserRouter doit envelopper AuthProvider et App */}
-      <AuthProvider>
-        <App />
-      </AuthProvider>
+    <Router> {/* BrowserRouter doit envelopper tous les fournisseurs et l'application */}
+      <NotificationProvider> {/* NotificationProvider doit être le parent de AuthProvider */}
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </NotificationProvider>
     </Router>
   </React.StrictMode>
 );

@@ -1,5 +1,5 @@
 // src/services/auth.ts
-import api from './api'; // Importe l'instance Axios configurée
+import { publicApi } from './api'; // Importe publicApi
 
 // Interface pour les données d'inscription, basée sur votre DTO RegisterRequest Java
 interface RegisterRequest {
@@ -17,13 +17,14 @@ interface ResetPasswordRequest {
 
 export const login = (username: string, password: string) => {
   console.log('AuthService: login called', { username, password });
-  // Le backend doit définir le Refresh Token comme un cookie HttpOnly ici
-  return api.post('/v1/auth/login', { username, password });
+  // Utilise publicApi pour la connexion directe à l'IAM
+  return publicApi.post('/v1/auth/login', { username, password });
 };
 
 export const register = (userData: RegisterRequest) => {
   console.log('AuthService: register called', userData);
-  return api.post('/v1/auth/register', userData);
+  // Utilise publicApi pour l'inscription directe à l'IAM
+  return publicApi.post('/v1/auth/register', userData);
 };
 
 /**
@@ -32,8 +33,8 @@ export const register = (userData: RegisterRequest) => {
  */
 export const refreshToken = () => {
   console.log('AuthService: refreshToken called (relying on HttpOnly cookie)');
-  // N'envoyez pas le refresh token dans le corps, il est envoyé via le cookie HttpOnly
-  return api.post('/v1/auth/refresh-token');
+  // Utilise publicApi pour le renouvellement direct à l'IAM
+  return publicApi.post('/v1/auth/refresh-token');
 };
 
 /**
@@ -43,8 +44,8 @@ export const refreshToken = () => {
  */
 export const logout = () => {
   console.log('AuthService: logout called (relying on HttpOnly cookie)');
-  // N'envoyez pas le refresh token dans le corps, il est envoyé via le cookie HttpOnly
-  return api.post('/v1/auth/logout');
+  // Utilise publicApi pour la déconnexion directe à l'IAM
+  return publicApi.post('/v1/auth/logout');
 };
 
 /**
@@ -54,7 +55,8 @@ export const logout = () => {
  */
 export const forgotPassword = (email: string) => {
   console.log('AuthService: forgotPassword called', { email });
-  return api.post('/v1/auth/forgot-password', { email });
+  // Utilise publicApi pour la demande de mot de passe oublié directe à l'IAM
+  return publicApi.post('/v1/auth/forgot-password', { email });
 };
 
 /**
@@ -67,7 +69,8 @@ export const forgotPassword = (email: string) => {
 export const resetPassword = (token: string, newPassword: string, confirmNewPassword: string) => {
   console.log('AuthService: resetPassword called', { token, newPassword, confirmNewPassword });
   const requestBody: ResetPasswordRequest = { token, newPassword, confirmNewPassword };
-  return api.post('/v1/auth/reset-password', requestBody);
+  // Utilise publicApi pour la réinitialisation de mot de passe directe à l'IAM
+  return publicApi.post('/v1/auth/reset-password', requestBody);
 };
 
 /**
@@ -77,5 +80,6 @@ export const resetPassword = (token: string, newPassword: string, confirmNewPass
  */
 export const verifyEmail = (token: string) => {
   console.log('AuthService: verifyEmail called', { token });
-  return api.get(`/v1/auth/verify-email?token=${token}`);
+  // Utilise publicApi pour la vérification d'e-mail directe à l'IAM
+  return publicApi.get(`/v1/auth/verify-email?token=${token}`);
 };

@@ -3,9 +3,11 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { jwtDecode } from 'jwt-decode';
 import * as authService from '../services/auth'; // Votre service d'authentification
 import { setupAxiosInterceptors } from '../services/api'; // Importe la fonction de setup des intercepteurs Axios
+import { useNotification } from './NotificationContext'; // Importe le hook de notification
 
 // Définition des types pour le contexte d'authentification
 interface UserInfo {
+  id: number; // Nouveau champ pour l'ID de l'utilisateur
   username: string;
   roles: string[];
   scopes: string[];
@@ -31,6 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [accessToken, setAccessToken] = useState<string | null>(null); // Access Token en mémoire
+  const { showNotification } = useNotification(); // Utilise le hook de notification
 
   // Déclaration de la fonction logout avant son utilisation dans useEffect
   const logout = useCallback(async () => {
@@ -38,16 +41,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Appelle le service de déconnexion backend qui invalidera le Refresh Token via HttpOnly cookie
       await authService.logout(); // Pas de paramètre refreshToken car il est dans le cookie
+      showNotification('Déconnexion réussie !', 'success'); // Affiche une notification de succès
     } catch (error) {
       console.error('Échec de la déconnexion backend:', error);
+      showNotification('Erreur lors de la déconnexion. Veuillez réessayer.', 'error'); // Affiche une notification d'erreur
     } finally {
       setAccessToken(null); // Nettoie l'Access Token en mémoire
       setUser(null); // Réinitialise l'état de l'utilisateur
       setLoading(false);
       // Rediriger vers la page de login après déconnexion
-      window.location.href = '/login'; // Rechargera la page pour effacer tout état
+      // Utilise un petit délai pour permettre à la notification de s'afficher
+      setTimeout(() => {
+        window.location.href = '/login'; // Rechargera la page pour effacer tout état
+      }, 500); // Délai de 500ms
     }
-  }, []);
+  }, [showNotification]); // Dépend de showNotification
 
   // Fonction pour obtenir l'Access Token actuel, également déclarée tôt
   const getAccessToken = useCallback(() => {
@@ -59,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Passe les fonctions de récupération de token et de déconnexion à Axios
     // S'assure que ces fonctions ne sont configurées qu'une fois que l'état de chargement initial est terminé
     if (!loading) { 
-      setupAxiosInterceptors(getAccessToken, logout, setAccessToken); // Passe setAccessToken
+      setupAxiosInterceptors(getAccessToken, logout, setAccessToken); // Utilise les fonctions déclarées ci-dessus
     }
   }, [loading, getAccessToken, logout, setAccessToken]); // Dépendances pour re-exécuter si ces fonctions/état changent
 
@@ -76,18 +84,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (username: string, password: string) => {
     try {
       const response = await authService.login(username, password);
-      // Le backend ne doit plus renvoyer refreshToken dans le corps ici, il doit le définir comme HttpOnly cookie
-      const { accessToken: newAccessToken } = response.data; 
+      const { accessToken: newAccessToken, userId } = response.data; // Récupère userId
 
       setAccessToken(newAccessToken); // Stocke l'Access Token en mémoire
 
       const decodedToken: any = jwtDecode(newAccessToken);
+      const roles = Array.isArray(decodedToken.roles) ? decodedToken.roles : []; 
       setUser({
+        id: userId, // Stocke l'ID de l'utilisateur
         username: decodedToken.sub,
-        roles: decodedToken.roles || [],
-        scopes: decodedToken.roles.flatMap((role: string) => {
-          // Ceci est un placeholder. En réalité, les scopes devraient venir du token ou d'un service.
-          // Pour l'exemple, on associe des scopes basiques aux rôles.
+        roles: roles,
+        scopes: roles.flatMap((role: string) => {
           if (role === 'ROLE_ADMIN') return ['read', 'write', 'delete', 'admin'];
           if (role === 'ROLE_USER') return ['read'];
           return [];
