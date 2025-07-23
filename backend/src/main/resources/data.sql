@@ -21,7 +21,7 @@ INSERT INTO user_roles (user_id, role_id) VALUES (1, 1);
 INSERT INTO users (
     id, username, email, password_hash, status, created_at, updated_at, last_login_at, enabled
 ) VALUES
-(2, 'metsa', 'metsa@example.com', '$2a$12$9opD.AOnMCjrZLuhSDCsOuIBuwFU8FCKTVJSWTXIB5CxR5C5it6o2', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, true);
+(2, 'metsa', 'andersonmetsanoum@gmail.com', '$2a$12$9opD.AOnMCjrZLuhSDCsOuIBuwFU8FCKTVJSWTXIB5CxR5C5it6o2', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, true);
 
 -- Association metsa -> ROLE_ADMIN
 INSERT INTO user_roles (user_id, role_id) VALUES (2, 1);

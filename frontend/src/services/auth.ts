@@ -8,6 +8,13 @@ interface RegisterRequest {
   password: string;
 }
 
+// Interface pour la requête de réinitialisation de mot de passe
+interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+  confirmNewPassword: string;
+}
+
 export const login = (username: string, password: string) => {
   console.log('AuthService: login called', { username, password });
   // Le backend doit définir le Refresh Token comme un cookie HttpOnly ici
@@ -40,8 +47,35 @@ export const logout = () => {
   return api.post('/v1/auth/logout');
 };
 
-// Vous pouvez ajouter ou décommenter les autres fonctions si vous en avez besoin plus tard
-// export const verifyEmail = (token: string) => {
-//   console.log('AuthService: verifyEmail called', { token });
-//   return api.get(`/v1/auth/verify-email?token=${token}`);
-// };
+/**
+ * Demande un token de réinitialisation de mot de passe pour l'e-mail donné.
+ * @param {string} email L'adresse e-mail de l'utilisateur.
+ * @returns {Promise<any>} La réponse de l'API.
+ */
+export const forgotPassword = (email: string) => {
+  console.log('AuthService: forgotPassword called', { email });
+  return api.post('/v1/auth/forgot-password', { email });
+};
+
+/**
+ * Réinitialise le mot de passe de l'utilisateur avec le token et le nouveau mot de passe.
+ * @param {string} token Le token de réinitialisation de mot de passe.
+ * @param {string} newPassword Le nouveau mot de passe.
+ * @param {string} confirmNewPassword La confirmation du nouveau mot de passe.
+ * @returns {Promise<any>} La réponse de l'API.
+ */
+export const resetPassword = (token: string, newPassword: string, confirmNewPassword: string) => {
+  console.log('AuthService: resetPassword called', { token, newPassword, confirmNewPassword });
+  const requestBody: ResetPasswordRequest = { token, newPassword, confirmNewPassword };
+  return api.post('/v1/auth/reset-password', requestBody);
+};
+
+/**
+ * Vérifie l'e-mail de l'utilisateur avec un token.
+ * @param {string} token Le token de vérification d'e-mail.
+ * @returns {Promise<any>} La réponse de l'API.
+ */
+export const verifyEmail = (token: string) => {
+  console.log('AuthService: verifyEmail called', { token });
+  return api.get(`/v1/auth/verify-email?token=${token}`);
+};

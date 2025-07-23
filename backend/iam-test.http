@@ -26,7 +26,7 @@ Content-Type: application/json
 
 ####
 #Vérifier l'e-mail avec le token
-GET http://localhost:8081/auth/verify-email?token=1b1afd07-368e-4eda-aca8-511fd2c59b89
+GET http://localhost:8081/v1/auth/verify-email?token=a38ac460-d207-4fe3-9229-f13733266c18
 
 ###
 POST http://localhost:8081/auth/refresh-token

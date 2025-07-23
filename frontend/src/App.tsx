@@ -8,13 +8,15 @@ import { setupAxiosInterceptors } from './services/api'; // Importe la fonction 
 // Pages
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import VerifyEmailPage from './pages/VerifyEmailPage'; // Nouvelle importation
 // Les autres pages sont temporairement non importées pour se concentrer sur la tâche actuelle
 // import DashboardPage from './pages/DashboardPage';
 // import UserManagementPage from './pages/UserManagementPage';
 // import RoleManagementPage from './pages/RoleManagementPage';
 // import PermissionManagementPage from './pages/PermissionManagementPage';
 // import RealmManagementPage from './pages/RealmManagementPage';
-// import VerifyEmailPage from './pages/VerifyEmailPage';
 
 
 // Composant pour les routes protégées (simplifié pour cette tâche, sera développé plus tard)
@@ -60,6 +62,9 @@ function App() {
           <Route path="/register" element={
             <RegisterPage />
           } />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} /> {/* Nouvelle route */}
           
           <Route path="/dashboard" element={
             <ProtectedRoute>
