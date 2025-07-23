@@ -1,10 +1,10 @@
 package cm.amcloud.platform.iam.dto;
 
-import java.util.Set;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+
+import java.util.Set;
 
 @Data
 public class RoleRequest {
@@ -17,4 +17,7 @@ public class RoleRequest {
 
     // Pour l'attribution des permissions à un rôle lors de sa création/mise à jour
     private Set<String> permissionNames;
+
+    // ID du Realm auquel le rôle appartient (pour la création/mise à jour par l'admin)
+    private Long realmId; // <-- NOUVEAU
 }

@@ -36,14 +36,19 @@ CREATE TABLE users (
     last_login_at TIMESTAMP,
     enabled BOOLEAN NOT NULL,
     failed_attempts INT DEFAULT 0, 
-    lockout_time TIMESTAMP 
+    lockout_time TIMESTAMP,
+    realm_id BIGINT NOT NULL,
+    FOREIGN KEY (realm_id) REFERENCES realms(id)
 );
 
 -- Create roles table
 CREATE TABLE roles (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    description VARCHAR(500)
+    description VARCHAR(500),
+    realm_id BIGINT, 
+    FOREIGN KEY (realm_id) REFERENCES realms(id)
+
 );
 
 -- Create user_roles table
@@ -61,7 +66,9 @@ CREATE TABLE permissions (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     scope_value VARCHAR(255),
-    description VARCHAR(500)
+    description VARCHAR(500),
+    realm_id BIGINT,
+    FOREIGN KEY (realm_id) REFERENCES realms(id)
 );
 
 -- Create role_permissions table

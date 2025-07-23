@@ -8,4 +8,6 @@ public class PermissionResponse {
     private String name;
     private String scopeValue;
     private String description;
+    private Long realmId; // <-- NOUVEAU
+    private String realmName; // <-- NOUVEAU
 }

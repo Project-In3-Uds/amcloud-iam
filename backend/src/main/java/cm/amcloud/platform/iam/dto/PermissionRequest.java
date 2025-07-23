@@ -16,4 +16,7 @@ public class PermissionRequest {
 
     @Size(max = 500, message = "La description de la permission ne peut pas dépasser 500 caractères")
     private String description;
+
+    // ID du Realm auquel la permission appartient (pour la création/mise à jour par l'admin)
+    private Long realmId; // <-- NOUVEAU
 }

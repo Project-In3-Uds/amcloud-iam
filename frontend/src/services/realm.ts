@@ -16,6 +16,43 @@ export interface RealmResponse {
   updatedAt: string;
 }
 
+// Interface pour les données de réponse de Rôle
+export interface RoleResponse {
+  id: number;
+  name: string;
+  description: string;
+  permissionNames: string[];
+  realmId: number;
+  realmName: string;
+}
+
+// Interface pour les données de requête de Rôle
+export interface RoleRequest {
+  name: string;
+  description?: string;
+  permissionNames?: string[];
+  realmId?: number;
+}
+
+// Interface pour les données de réponse de Permission <-- NOUVEAU
+export interface PermissionResponse {
+  id: number;
+  name: string;
+  scopeValue: string;
+  description: string;
+  realmId: number;
+  realmName: string;
+}
+
+// Interface pour les données de requête de Permission <-- NOUVEAU
+export interface PermissionRequest {
+  name: string;
+  scopeValue: string;
+  description?: string;
+  realmId?: number;
+}
+
+
 /**
  * Récupère tous les Realms.
  * @returns {Promise<RealmResponse[]>} Une liste des Realms.

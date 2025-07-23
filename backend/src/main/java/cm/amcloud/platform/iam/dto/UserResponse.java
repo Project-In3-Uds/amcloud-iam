@@ -16,4 +16,6 @@ public class UserResponse {
     private LocalDateTime lastLoginAt;
     private Set<String> roles; // Noms des rôles
     private Set<String> permissions; // Noms des permissions (scopes)
+    private Long realmId; // <-- NOUVEAU
+    private String realmName; // <-- NOUVEAU
 }

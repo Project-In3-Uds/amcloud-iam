@@ -7,11 +7,13 @@ import cm.amcloud.platform.iam.dto.UserRoleAssignmentRequest;
 import cm.amcloud.platform.iam.model.EmailVerificationToken;
 import cm.amcloud.platform.iam.model.PasswordResetToken;
 import cm.amcloud.platform.iam.model.Permission;
+import cm.amcloud.platform.iam.model.Realm; // Import Realm
 import cm.amcloud.platform.iam.model.Role;
 import cm.amcloud.platform.iam.model.RefreshToken;
 import cm.amcloud.platform.iam.model.User;
 import cm.amcloud.platform.iam.repository.EmailVerificationTokenRepository;
 import cm.amcloud.platform.iam.repository.PasswordResetTokenRepository;
+import cm.amcloud.platform.iam.repository.RealmRepository; // Import RealmRepository
 import cm.amcloud.platform.iam.repository.RoleRepository;
 import cm.amcloud.platform.iam.repository.UserRepository;
 import cm.amcloud.platform.iam.repository.RefreshTokenRepository;
@@ -25,7 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID; // Import UUID
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,6 +41,7 @@ public class UserService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final NotificationService notificationService;
+    private final RealmRepository realmRepository; // <-- NOUVEAU
 
     @Value("${account.lockout.max-attempts:2}")
     private int maxFailedAttempts;
@@ -56,7 +59,8 @@ public class UserService {
                        RoleRepository roleRepository,
                        RefreshTokenRepository refreshTokenRepository,
                        PasswordResetTokenRepository passwordResetTokenRepository,
-                       NotificationService notificationService) {
+                       NotificationService notificationService,
+                       RealmRepository realmRepository) { // <-- NOUVEAU
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.passwordValidationService = passwordValidationService;
@@ -65,10 +69,12 @@ public class UserService {
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.notificationService = notificationService;
+        this.realmRepository = realmRepository; // <-- NOUVEAU
     }
 
     /**
      * Registers a new user, hashes their password, and generates an email verification token.
+     * New users are assigned to the 'master' realm by default.
      *
      * @param request The registration request containing username, email, and raw password.
      * @return The newly created User entity.
@@ -96,6 +102,11 @@ public class UserService {
         newUser.setUpdatedAt(LocalDateTime.now());
         newUser.setFailedAttempts(0);
         newUser.setLockoutTime(null);
+
+        // Assign to 'master' realm by default for new registrations
+        Realm masterRealm = realmRepository.findById(1L) // Assuming 'master' realm has ID 1
+                .orElseThrow(() -> new IllegalStateException("Master Realm not found. Please ensure it exists."));
+        newUser.setRealm(masterRealm); // <-- NOUVEAU
 
         Optional<Role> userRoleOptional = roleRepository.findByName("ROLE_USER");
         if (userRoleOptional.isEmpty()) {
@@ -134,6 +145,17 @@ public class UserService {
     public User findByUsername(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found: " + username));
+    }
+
+    /**
+     * Finds a user entity by ID.
+     * This method is added to retrieve the full User object for internal use (e.g., by security filters).
+     *
+     * @param id The ID of the user to search for.
+     * @return An Optional containing the User entity if found.
+     */
+    public Optional<User> findUserEntityById(Long id) {
+        return userRepository.findById(id);
     }
 
     /**
@@ -303,11 +325,11 @@ public class UserService {
     }
 
     /**
-     * Crée un nouvel utilisateur avec les rôles spécifiés.
+     * Crée un nouvel utilisateur avec les rôles spécifiés et l'associe à un Realm.
      *
-     * @param userRequest Les détails de l'utilisateur à créer.
+     * @param userRequest Les détails de l'utilisateur à créer, incluant l'ID du Realm.
      * @return Le UserResponse de l'utilisateur créé.
-     * @throws IllegalArgumentException si le nom d'utilisateur ou l'e-mail existe déjà, ou si la politique de mot de passe n'est pas respectée.
+     * @throws IllegalArgumentException si le nom d'utilisateur/e-mail existe déjà, la politique de mot de passe n'est pas respectée, ou le Realm n'est pas trouvé.
      */
     @Transactional
     public UserResponse createUser(UserRequest userRequest) {
@@ -327,12 +349,17 @@ public class UserService {
         newUser.setUsername(userRequest.getUsername());
         newUser.setEmail(userRequest.getEmail());
         newUser.setPassword(passwordEncoder.encode(userRequest.getPassword()));
-        newUser.setStatus(userRequest.getStatus() != null ? userRequest.getStatus() : "ACTIVE"); // Par défaut 'ACTIVE' si non spécifié
-        newUser.setEnabled(true); // Toujours activé par défaut pour les créations admin
+        newUser.setStatus(userRequest.getStatus() != null ? userRequest.getStatus() : "ACTIVE");
+        newUser.setEnabled(true);
         newUser.setCreatedAt(LocalDateTime.now());
         newUser.setUpdatedAt(LocalDateTime.now());
         newUser.setFailedAttempts(0);
         newUser.setLockoutTime(null);
+
+        // Assigner l'utilisateur au Realm spécifié dans la requête
+        Realm targetRealm = realmRepository.findById(userRequest.getRealmId())
+                .orElseThrow(() -> new IllegalArgumentException("Realm non trouvé avec l'ID: " + userRequest.getRealmId()));
+        newUser.setRealm(targetRealm); // <-- NOUVEAU
 
         Set<Role> roles = new HashSet<>();
         if (userRequest.getRoles() != null && !userRequest.getRoles().isEmpty()) {
@@ -343,7 +370,6 @@ public class UserService {
                         });
             }
         } else {
-            // Assigner un rôle par défaut si aucun n'est spécifié, par exemple ROLE_USER
             roleRepository.findByName("ROLE_USER").ifPresent(roles::add);
         }
         newUser.setRoles(roles);
@@ -377,6 +403,21 @@ public class UserService {
     }
 
     /**
+     * Récupère tous les utilisateurs d'un Realm spécifique.
+     *
+     * @param realmId L'ID du Realm.
+     * @return Une liste de UserResponse pour le Realm donné.
+     * @throws IllegalArgumentException si le Realm n'est pas trouvé.
+     */
+    public List<UserResponse> getAllUsersByRealm(Long realmId) { // <-- NOUVEAU
+        Realm realm = realmRepository.findById(realmId)
+                .orElseThrow(() -> new IllegalArgumentException("Realm non trouvé avec l'ID: " + realmId));
+        return userRepository.findByRealm(realm).stream()
+                .map(this::convertToUserResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Met à jour les informations d'un utilisateur existant.
      *
      * @param id L'ID de l'utilisateur à mettre à jour.
@@ -388,6 +429,12 @@ public class UserService {
     public UserResponse updateUser(Long id, UserRequest userRequest) {
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur non trouvé avec l'ID: " + id));
+
+        // Le Realm d'un utilisateur ne doit pas être changé via cette méthode.
+        // Si userRequest.getRealmId() est fourni et différent, ignorez-le ou lancez une erreur.
+        if (userRequest.getRealmId() != null && !userRequest.getRealmId().equals(existingUser.getRealm().getId())) {
+            throw new IllegalArgumentException("Le Realm d'un utilisateur ne peut pas être modifié via cette API.");
+        }
 
         // Vérifier si le nouvel e-mail est déjà pris par un autre utilisateur
         if (userRequest.getEmail() != null && !userRequest.getEmail().equals(existingUser.getEmail())) {
@@ -495,6 +542,8 @@ public class UserService {
         response.setCreatedAt(user.getCreatedAt());
         response.setUpdatedAt(user.getUpdatedAt());
         response.setLastLoginAt(user.getLastLoginAt());
+        response.setRealmId(user.getRealm().getId()); // <-- NOUVEAU
+        response.setRealmName(user.getRealm().getName()); // <-- NOUVEAU
 
         // Mapper les noms des rôles
         if (user.getRoles() != null) {
@@ -505,7 +554,7 @@ public class UserService {
             // Mapper les noms des permissions (scopes)
             Set<String> permissions = user.getRoles().stream()
                     .flatMap(role -> role.getPermissions().stream())
-                    .map(Permission::getScopeValue) // Ou getScopeValue() si vous préférez les scopes bruts
+                    .map(Permission::getScopeValue)
                     .filter(scope -> scope != null && !scope.isBlank())
                     .collect(Collectors.toSet());
             response.setPermissions(permissions);

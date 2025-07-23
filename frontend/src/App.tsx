@@ -12,7 +12,10 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import ProfilePage from './pages/ProfilePage';
-import RealmManagementPage from './pages/RealmManagementPage'; // Nouvelle importation
+import RealmManagementPage from './pages/RealmManagementPage';
+import UserManagementPage from './pages/UserManagementPage';
+import RoleManagementPage from './pages/RoleManagementPage'; // Nouvelle importation
+import PermissionManagementPage from './pages/PermissionManagementPage'; // Nouvelle importation
 
 // Composant pour les routes protégées
 const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[]; allowedScopes?: string[] }> = ({ children, allowedRoles, allowedScopes }) => {
@@ -65,7 +68,6 @@ function App() {
     <div className="min-h-screen bg-gray-100">
       <NotificationProvider>
         {loading && <LoadingOverlay />}
-        {/* Le composant Router a été déplacé dans src/index.tsx */}
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -86,6 +88,26 @@ function App() {
             </ProtectedRoute>
           } />
 
+          <Route path="/admin/users" element={
+            <ProtectedRoute allowedRoles={['ROLE_ADMIN']}>
+              <UserManagementPage />
+            </ProtectedRoute>
+          } />
+
+          {/* NOUVELLE ROUTE */}
+          <Route path="/admin/roles" element={
+            <ProtectedRoute allowedRoles={['ROLE_ADMIN']}>
+              <RoleManagementPage />
+            </ProtectedRoute>
+          } />
+
+          {/* NOUVELLE ROUTE */}
+          <Route path="/admin/permissions" element={
+            <ProtectedRoute allowedRoles={['ROLE_ADMIN']}>
+              <PermissionManagementPage />
+            </ProtectedRoute>
+          } />
+
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -95,12 +117,17 @@ function App() {
                   <div className="mt-4 flex flex-col space-y-2">
                     <Link to="/profile" className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Voir mon profil</Link>
                     {user?.roles.includes('ROLE_ADMIN') && (
-                      <Link to="/admin/realms" className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600">Gérer les Realms</Link>
+                      <>
+                        <Link to="/admin/realms" className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600">Gérer les Realms</Link>
+                        <Link to="/admin/users" className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Gérer les Utilisateurs</Link>
+                        <Link to="/admin/roles" className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">Gérer les Rôles</Link> {/* <-- NOUVEAU LIEN */}
+                        <Link to="/admin/permissions" className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600">Gérer les Permissions</Link> {/* <-- NOUVEAU LIEN */}
+                      </>
                     )}
                     <button onClick={logout} className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Déconnexion</button>
                   </div>
                 </div>
-              </div> {/* <-- Balise de fermeture ajoutée ici */}
+              </div>
             </ProtectedRoute>
           } />
 

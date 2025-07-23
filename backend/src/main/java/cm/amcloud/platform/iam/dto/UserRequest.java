@@ -27,4 +27,7 @@ public class UserRequest {
 
     // Liste des noms de rôles à associer à l'utilisateur
     private java.util.Set<String> roles;
+
+    // ID du Realm auquel l'utilisateur appartient (pour la création/mise à jour par l'admin)
+    private Long realmId;
 }
