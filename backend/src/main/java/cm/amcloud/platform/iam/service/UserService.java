@@ -1,18 +1,5 @@
 package cm.amcloud.platform.iam.service;
 
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import cm.amcloud.platform.iam.dto.RegisterRequest;
 import cm.amcloud.platform.iam.dto.UserRequest;
 import cm.amcloud.platform.iam.dto.UserResponse;
@@ -20,14 +7,26 @@ import cm.amcloud.platform.iam.dto.UserRoleAssignmentRequest;
 import cm.amcloud.platform.iam.model.EmailVerificationToken;
 import cm.amcloud.platform.iam.model.PasswordResetToken;
 import cm.amcloud.platform.iam.model.Permission;
-import cm.amcloud.platform.iam.model.RefreshToken;
 import cm.amcloud.platform.iam.model.Role;
+import cm.amcloud.platform.iam.model.RefreshToken;
 import cm.amcloud.platform.iam.model.User;
 import cm.amcloud.platform.iam.repository.EmailVerificationTokenRepository;
 import cm.amcloud.platform.iam.repository.PasswordResetTokenRepository;
-import cm.amcloud.platform.iam.repository.RefreshTokenRepository;
-import cm.amcloud.platform.iam.repository.RoleRepository; // Import UUID
+import cm.amcloud.platform.iam.repository.RoleRepository;
 import cm.amcloud.platform.iam.repository.UserRepository;
+import cm.amcloud.platform.iam.repository.RefreshTokenRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID; // Import UUID
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {

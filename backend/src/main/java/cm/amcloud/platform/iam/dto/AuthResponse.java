@@ -1,14 +1,23 @@
 package cm.amcloud.platform.iam.dto;
-import lombok.Data; 
 
-@Data 
 public class AuthResponse {
-    private String accessToken; 
-    private String refreshToken;
+    private String accessToken; // Renamed from 'token' for clarity
+    // private String refreshToken; // Supprimé
 
-    public AuthResponse(String accessToken, String refreshToken) {
+    public AuthResponse(String accessToken) { // Constructeur mis à jour
         this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
     }
 
+    // Getter
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    // Setter (optional, if you need to modify after creation, but usually DTOs are immutable)
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
+    }
+
+    // Supprimé: getRefreshToken()
+    // Supprimé: setRefreshToken()
 }

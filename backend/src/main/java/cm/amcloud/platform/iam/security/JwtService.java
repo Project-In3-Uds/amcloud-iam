@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
+import java.util.UUID; // Import UUID
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -22,6 +22,8 @@ import org.springframework.stereotype.Service;
 import io.jsonwebtoken.Claims; // Import Claims
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders; // Import Decoders
+import io.jsonwebtoken.security.Keys; // Import Keys
 
 @Service
 public class JwtService {
@@ -170,5 +172,14 @@ public class JwtService {
      */
     public boolean isTokenExpired(String token) {
         return extractClaim(token, Claims::getExpiration).before(Date.from(Instant.now()));
+    }
+
+    /**
+     * Retourne la durée de vie du Refresh Token en jours.
+     * Utilisé pour configurer la durée de vie du cookie HttpOnly.
+     * @return La durée de vie du Refresh Token en jours.
+     */
+    public long getRefreshTokenExpirationDays() {
+        return refreshTokenExpirationDays;
     }
 }

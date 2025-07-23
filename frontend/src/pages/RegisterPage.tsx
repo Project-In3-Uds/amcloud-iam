@@ -1,52 +1,68 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import * as authService from '../services/auth'; // Votre service d'authentification
-import { useAuth } from '../contexts/AuthContext'; // Si vous voulez gérer l'état global après l'inscription
+import * as authService from '../services/auth';
+import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext'; // Importe le hook de notification
+import axios from 'axios';
 
 const RegisterPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  // const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null); // Supprimé
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth(); // Pour vérifier si l'utilisateur est déjà connecté
+  const { user } = useAuth();
+  const { showNotification } = useNotification(); // Utilise le hook de notification
 
   // Rediriger si l'utilisateur est déjà connecté
   if (user) {
-    navigate('/dashboard'); // Ou une page de succès d'inscription si elle existe
-    return null; // Empêche le rendu du formulaire si redirigé
+    navigate('/dashboard');
+    return null;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage(null); // Réinitialise les messages précédents
+    // setMessage(null); // Supprimé
     setLoading(true);
 
     if (password !== confirmPassword) {
-      setMessage({ type: 'error', text: 'Les mots de passe ne correspondent pas.' });
+      showNotification('Les mots de passe ne correspondent pas.', 'error'); // Affiche un message d'erreur
       setLoading(false);
       return;
     }
 
     try {
       const response = await authService.register({ username, email, password });
-      // Utilise le message de succès de la réponse API si disponible, sinon un message par défaut
       const successMessage = response.data || 'Inscription réussie ! Veuillez vérifier votre e-mail pour activer votre compte.';
-      setMessage({
-        type: 'success',
-        text: successMessage,
-      });
-      // Optionnel: Rediriger après un court délai
+      showNotification(successMessage, 'success'); // Affiche un message de succès
       setTimeout(() => {
-        navigate('/login'); // Rediriger vers la page de login après inscription réussie
+        navigate('/login');
       }, 3000);
     } catch (error: any) {
       console.error('Erreur d\'inscription:', error);
-      // Capture le message d'erreur de la réponse API, ou un message générique
-      const errorMessage = error.response?.data || 'Une erreur inattendue est survenue lors de l\'inscription.';
-      setMessage({ type: 'error', text: errorMessage });
+      let errorMessage = 'Une erreur inattendue est survenue lors de l\'inscription.';
+
+      if (axios.isAxiosError(error) && error.response) {
+        if (typeof error.response.data === 'string') {
+          errorMessage = error.response.data;
+        } else if (Array.isArray(error.response.data) && typeof error.response.data[0] === 'string') {
+          errorMessage = error.response.data[0];
+        } else if (error.response.data && typeof error.response.data === 'object' && 'message' in error.response.data) {
+          errorMessage = (error.response.data as { message: string }).message;
+        } else if (error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data) {
+          errorMessage = (error.response.data as { error: string }).error;
+        } else if (error.response.status) {
+          errorMessage = `Erreur ${error.response.status}: ${error.response.statusText || 'Réponse du serveur non gérée.'}`;
+        }
+      } else if (axios.isAxiosError(error) && error.request) {
+        errorMessage = 'Impossible de se connecter au serveur. Veuillez vérifier votre connexion ou réessayer plus tard.';
+      } else {
+        errorMessage = 'Une erreur s\'est produite avant l\'envoi de la requête.';
+      }
+      
+      showNotification(errorMessage, 'error'); // Affiche un message d'erreur
     } finally {
       setLoading(false);
     }
@@ -61,7 +77,8 @@ const RegisterPage: React.FC = () => {
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {message && (
+          {/* Le div de message local est supprimé, les notifications sont gérées globalement */}
+          {/* {message && (
             <div
               className={`p-3 rounded-md text-sm ${
                 message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -69,7 +86,7 @@ const RegisterPage: React.FC = () => {
             >
               {message.text}
             </div>
-          )}
+          )} */}
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="username" className="sr-only">Nom d'utilisateur</label>
