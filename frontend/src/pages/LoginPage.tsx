@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext'; // Importe le contexte d'authentification
-import { useNotification } from '../contexts/NotificationContext'; // Importe le hook de notification
-import axios from 'axios'; // Importe axios pour vérifier le type d'erreur
+import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
+import axios from 'axios';
+import './LoginPage.css'; // Importe le fichier CSS séparé
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { user, login } = useAuth(); // Utilise la fonction login du contexte
-  const { showNotification } = useNotification(); // Utilise le hook de notification
+  const { user, login } = useAuth();
+  const { showNotification } = useNotification();
 
   // Rediriger si l'utilisateur est déjà connecté
   if (user) {
-    navigate('/dashboard'); // Redirige vers le tableau de bord si déjà connecté
-    return null; // Empêche le rendu du formulaire si redirigé
+    navigate('/dashboard');
+    return null;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,7 +25,7 @@ const LoginPage: React.FC = () => {
 
     try {
       await login(username, password);
-      showNotification('Connexion réussie ! Redirection...', 'success'); // Affiche un message de succès via le système global
+      showNotification('Connexion réussie ! Redirection...', 'success');
       setTimeout(() => {
         navigate('/dashboard');
       }, 1500);
@@ -50,78 +51,93 @@ const LoginPage: React.FC = () => {
       } else {
         errorMessage = 'Une erreur s\'est produite avant l\'envoi de la requête.';
       }
-      
-    showNotification(errorMessage, 'error'); 
+
+      showNotification(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-xl shadow-lg">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Connectez-vous à votre compte
-          </h2>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {/* Le div de message local est supprimé car les notifications sont gérées globalement */}
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="username-or-email" className="sr-only">Nom d'utilisateur ou E-mail</label>
-              <input
-                id="username-or-email"
-                name="username-or-email"
-                type="text" // Peut être text ou email selon si le backend accepte les deux
-                autoComplete="username"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Nom d'utilisateur ou E-mail"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">Mot de passe</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Mot de passe"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+    <div className="login-container">
+      {/* Placeholder pour le logo */}
+      <div className="login-logo">
+        {/* Insérez votre SVG de logo ici ou une balise <img> */}
+        {/* Exemple d'un SVG de logo générique (remplacez par le vôtre) */}
+        <svg height="48" viewBox="0 0 24 24" width="48" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" fill="#333"/>
+        </svg>
+      </div>
+
+      <h1 className="login-title">Connectez-vous à Amcloud</h1>
+
+      <div className="login-card">
+        <form className="login-form" onSubmit={handleSubmit}>
+          {/* Champ Nom d'utilisateur/E-mail */}
+          <div>
+            <label htmlFor="username-or-email" className="sr-only">Nom d'utilisateur ou E-mail</label>
+            <input
+              id="username-or-email"
+              name="username-or-email"
+              type="text"
+              autoComplete="username"
+              required
+              className="input-field username"
+              placeholder="Nom d'utilisateur ou E-mail"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </div>
+          {/* Champ Mot de passe */}
+          <div>
+            <label htmlFor="password" className="sr-only">Mot de passe</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              className="input-field password"
+              placeholder="Mot de passe"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="text-sm">
-              <Link to="/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500">
-                Mot de passe oublié ?
-              </Link>
-            </div>
+          {/* Lien Mot de passe oublié */}
+          <div className="forgot-password-link-container">
+            <Link to="/forgot-password" className="forgot-password-link">
+              Mot de passe oublié ?
+            </Link>
           </div>
 
+          {/* Bouton de soumission */}
           <div>
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="login-button"
             >
               {loading ? 'Connexion en cours...' : 'Se connecter'}
             </button>
           </div>
         </form>
-        <div className="text-sm text-center">
-          Pas encore de compte ?{' '}
-          <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-            Inscrivez-vous ici
-          </Link>
-        </div>
+      </div>
+
+      {/* Carte d'inscription séparée */}
+      <div className="register-card">
+        Nouveau sur Amcloud ?{' '}
+        <Link to="/register" className="register-link">
+          Créez un compte.
+        </Link>
+      </div>
+
+      {/* Liens de pied de page (simulés) */}
+      <div style={{ marginTop: '2rem', fontSize: '0.75rem', color: '#0366d6' }}>
+        <Link to="#" style={{ marginRight: '1rem', textDecoration: 'none', color: 'inherit' }}>Termes</Link>
+        <Link to="#" style={{ marginRight: '1rem', textDecoration: 'none', color: 'inherit' }}>Confidentialité</Link>
+        <Link to="#" style={{ marginRight: '1rem', textDecoration: 'none', color: 'inherit' }}>Sécurité</Link>
+        <Link to="#" style={{ textDecoration: 'none', color: 'inherit' }}>Contact Amcloud</Link>
       </div>
     </div>
   );

@@ -1,0 +1,252 @@
+/* src/pages/UserManagementPage.css */
+
+.user-management-container {
+  background-color: #ffffff; /* White background for the main content area */
+  padding: 20px 25px; /* Padding similar to Keycloak's content area */
+  border-radius: 0px; /* Removed border-radius to align perfectly with header/sidebar */
+  box-shadow: none; /* Removed shadow to blend with main content area */
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; /* Ensure it takes all available height within content-area */
+}
+
+.user-header-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee; /* Separator line */
+}
+
+.user-main-title {
+  font-size: 1.5rem; /* Larger title for the main section */
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.user-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px; /* Space between trash icon and button */
+}
+
+.user-tabs-nav {
+  display: flex;
+  border-bottom: 1px solid #ddd; /* Bottom border for tabs */
+  margin-bottom: 20px;
+  overflow-x: auto; /* Allow horizontal scrolling for many tabs */
+  white-space: nowrap; /* Prevent tabs from wrapping */
+}
+
+.user-tab-button {
+  padding: 10px 15px;
+  background-color: transparent;
+  border: none;
+  border-bottom: 2px solid transparent; /* Default transparent border */
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #555;
+  transition: all 0.2s ease;
+  white-space: nowrap; /* Prevent wrapping */
+}
+
+.user-tab-button:hover:not(:disabled) {
+  color: #007bff; /* Blue on hover */
+}
+
+.user-tab-button.active {
+  color: #007bff; /* Active tab color */
+  border-bottom-color: #007bff; /* Active tab underline */
+  font-weight: 600;
+}
+
+.user-tab-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.user-tab-content {
+  padding-top: 15px;
+}
+
+.form-section {
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: flex-start; /* Align label with the top of the input/textarea */
+  gap: 15px; /* Space between label and input */
+}
+
+.form-label {
+  font-size: 0.9rem;
+  color: #333;
+  font-weight: 500;
+  min-width: 150px; /* Fixed width for labels for alignment */
+  text-align: right; /* Align label text to the right */
+  padding-right: 10px;
+  padding-top: 8px; /* Align label with the top of the input field */
+}
+
+.form-input-wrapper {
+  flex-grow: 1; /* Allow input to take remaining space */
+}
+
+.form-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  box-sizing: border-box; /* Include padding and border in the element's total width and height */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  outline: none;
+}
+
+.form-input[disabled] {
+  background-color: #e9ecef; /* Lighter background for disabled inputs */
+  cursor: not-allowed;
+  color: #6c757d;
+}
+
+.form-input.small {
+  max-width: 200px; /* For smaller inputs like 'Name' */
+}
+
+.form-buttons {
+  margin-top: 25px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-start; /* Align buttons to the left */
+  padding-left: 165px; /* Align with input fields (150px label + 15px gap) */
+}
+
+.form-button {
+  padding: 8px 18px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.form-button.save {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.form-button.save:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+.form-button.cancel {
+  background-color: #f8f9fa;
+  color: #333;
+  border-color: #ccc;
+}
+
+.form-button.cancel:hover {
+  background-color: #e2e6ea;
+}
+
+/* Info icon styling */
+.info-icon {
+  color: #888;
+  font-size: 0.8rem;
+  margin-left: 5px;
+  cursor: help;
+}
+
+/* Styles for User List */
+.user-list-section {
+  margin-top: 0px; /* Removed top margin */
+}
+
+.user-intro-text {
+  background-color: #e0f7fa; /* Light blue background */
+  border-left: 4px solid #00bcd4; /* Cyan left border */
+  padding: 15px 20px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  color: #006064; /* Darker cyan text */
+  line-height: 1.5;
+}
+
+.user-intro-text strong {
+  color: #004d40; /* Even darker text for strong words */
+}
+
+.user-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.user-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  background-color: #fcfcfc;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.user-list-item:hover {
+  background-color: #f0f0f0;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.user-name {
+  font-weight: 500;
+  color: #007bff; /* Make it look clickable */
+  cursor: pointer;
+  flex-grow: 1; /* Allow name to take available space */
+}
+
+.user-status {
+  font-size: 0.85rem;
+  color: #666;
+  margin-left: 20px; /* Space from name */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-delete-button {
+  background: none;
+  border: none;
+  color: #dc3545;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-left: 15px;
+  transition: color 0.2s ease;
+  padding: 5px; /* Add padding for easier clicking */
+  border-radius: 4px;
+}
+
+.user-delete-button:hover {
+  color: #a71d2a;
+  background-color: #f8d7da; /* Light red background on hover */
+}
+
+.no-users-found {
+  text-align: center;
+  padding: 50px;
+  color: #777;
+  font-size: 1.1rem;
+}

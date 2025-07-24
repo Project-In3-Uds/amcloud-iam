@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import * as authService from '../services/auth';
 import { useNotification } from '../contexts/NotificationContext';
 import axios from 'axios';
+import './ForgotPasswordPage.css'; // Importe le fichier CSS séparé
 
 const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -45,49 +46,63 @@ const ForgotPasswordPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-xl shadow-lg">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Mot de passe oublié ?
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Saisissez votre adresse e-mail pour réinitialiser votre mot de passe.
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email-address" className="sr-only">Adresse e-mail</label>
-              <input
-                id="email-address"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Adresse e-mail"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
+    <div className="forgot-password-container">
+      {/* Placeholder pour le logo */}
+      <div className="forgot-password-logo">
+        {/* Insérez votre SVG de logo ici ou une balise <img> */}
+        {/* Exemple d'un SVG de logo générique (remplacez par le vôtre) */}
+        <svg height="48" viewBox="0 0 24 24" width="48" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" fill="#333"/>
+        </svg>
+      </div>
+
+      <h1 className="forgot-password-title">Mot de passe oublié ?</h1>
+
+      <div className="forgot-password-card">
+        <p style={{ fontSize: '0.875rem', color: '#586069', marginBottom: '1rem', textAlign: 'center' }}>
+          Saisissez votre adresse e-mail pour réinitialiser votre mot de passe.
+        </p>
+        <form className="forgot-password-form" onSubmit={handleSubmit}>
+          <div>
+            <label htmlFor="email-address" className="sr-only">Adresse e-mail</label>
+            <input
+              id="email-address"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              className="input-field"
+              placeholder="Adresse e-mail"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
 
           <div>
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="forgot-password-button"
             >
               {loading ? 'Envoi en cours...' : 'Envoyer le lien de réinitialisation'}
             </button>
           </div>
         </form>
-        <div className="text-sm text-center">
-          <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
-            Retour à la connexion
-          </Link>
-        </div>
+      </div>
+
+      {/* Carte de connexion séparée */}
+      <div className="login-card-container">
+        <Link to="/login" className="login-link">
+          Retour à la connexion
+        </Link>
+      </div>
+
+      {/* Liens de pied de page (simulés) */}
+      <div style={{ marginTop: '2rem', fontSize: '0.75rem', color: '#0366d6' }}>
+        <Link to="#" style={{ marginRight: '1rem', textDecoration: 'none', color: 'inherit' }}>Termes</Link>
+        <Link to="#" style={{ marginRight: '1rem', textDecoration: 'none', color: 'inherit' }}>Confidentialité</Link>
+        <Link to="#" style={{ marginRight: '1rem', textDecoration: 'none', color: 'inherit' }}>Sécurité</Link>
+        <Link to="#" style={{ textDecoration: 'none', color: 'inherit' }}>Contact Amcloud</Link>
       </div>
     </div>
   );
