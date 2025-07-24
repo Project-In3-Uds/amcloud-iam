@@ -14,7 +14,7 @@ interface User {
   enabled: boolean;
   createdAt: string;
   updatedAt: string;
-  lastLoginAt?: string; // Optional as it might be null
+  lastLoginAt?: string | null; // <-- allow null
   roles: string[];
   permissions: string[];
 }

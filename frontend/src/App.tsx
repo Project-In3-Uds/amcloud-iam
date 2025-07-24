@@ -27,7 +27,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles,
   const { user, loading, hasRole, hasPermission } = useAuth();
 
   if (loading) {
-    return <div>Chargement de l'authentification...</div>; // Ou un spinner
+    return <div>Chargement de l'authentification...</div>;
   }
 
   if (!user) {
@@ -42,7 +42,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles,
     return <div>Accès refusé. Vous n'avez pas les permissions nécessaires.</div>;
   }
 
-  return children;
+  return <>{children}</>;
 };
 
 function App() {
