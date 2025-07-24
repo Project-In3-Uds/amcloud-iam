@@ -22,6 +22,7 @@ body {
   flex-direction: column;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
   padding-top: 15px; /* Reduced padding-top */
+  overflow-y: auto; /* Permet le défilement si le contenu dépasse */
 }
 
 .sidebar-header {
@@ -174,7 +175,7 @@ body {
 
 .content-area {
   flex-grow: 1;
-  padding: 20px; /* Slightly reduced padding */
+  padding: 0px; /* CHANGED: Removed padding to eliminate the gap */
   overflow-y: auto; /* Allows scrolling if content overflows */
 }
 

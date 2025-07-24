@@ -429,9 +429,6 @@ const RealmManagementPage: React.FC = () => {
             <div className="realm-intro-text">
               <p>
                 In Amcloud IAM, a <strong>Realm</strong> represents a logical partition of users, applications, and security policies.
-                It allows you to manage isolated sets of identities and configurations, ensuring that users
-                and applications in one realm do not interfere with those in another. You can define specific authentication flows, user attributes, and client registrations
-                within each realm.
               </p>
               <p>
                 Select an existing realm from the list below to manage its settings, or click "Create Realm" to set up a new one.

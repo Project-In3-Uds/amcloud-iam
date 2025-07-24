@@ -1,70 +1,65 @@
 // src/services/realmRole.ts
 import { protectedApi } from './api';
-import { RoleResponse, RoleRequest } from './realm'; // Importe RoleResponse et RoleRequest depuis realm.ts
+
+// Interface for Role data received in responses
+export interface RoleResponse {
+  id: number;
+  name: string;
+  description: string;
+  realmId: number; // Ensure realmId is part of the response
+  permissionNames: string[]; // List of permission names associated with the role
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Interface for Role data used in requests (create/update)
+export interface RoleRequest {
+  name: string;
+  description: string;
+  permissionNames: string[];
+  realmId: number; // Realm ID is required for creation/update within a specific realm
+}
 
 /**
- * Récupère tous les rôles d'un Realm spécifique.
- * @param {number} realmId L'ID du Realm.
- * @returns {Promise<{ data: RoleResponse[] }>} Une liste des rôles.
+ * Retrieves all roles for a specific realm.
+ * @param realmId The ID of the realm.
+ * @returns A Promise resolving to an array of RoleResponse.
  */
-export const getAllRolesByRealm = (realmId: number): Promise<{ data: RoleResponse[] }> => {
-  console.log(`RealmRoleService: getAllRolesByRealm called for Realm ID: ${realmId}`);
-  return protectedApi.get(`/v1/admin/realms/${realmId}/roles`);
+export const getAllRolesByRealm = (realmId: number) => {
+  console.log(`RealmRoleService: getAllRolesByRealm called for realm ID: ${realmId}`);
+  return protectedApi.get<RoleResponse[]>(`/v1/admin/realms/${realmId}/roles`);
 };
 
 /**
- * Crée un nouveau rôle dans un Realm spécifique.
- * @param {number} realmId L'ID du Realm où créer le rôle.
- * @param {RoleRequest} roleData Les données du rôle à créer.
- * @returns {Promise<{ data: RoleResponse }>} Le rôle créé.
+ * Creates a new role within a specific realm.
+ * @param realmId The ID of the realm where the role will be created.
+ * @param roleData The data for the new role.
+ * @returns A Promise resolving to the created RoleResponse.
  */
-export const createRoleInRealm = (realmId: number, roleData: RoleRequest): Promise<{ data: RoleResponse }> => {
-  console.log(`RealmRoleService: createRoleInRealm called for Realm ID: ${realmId}`, roleData);
-  return protectedApi.post(`/v1/admin/realms/${realmId}/roles`, { ...roleData, realmId });
+export const createRoleInRealm = (realmId: number, roleData: RoleRequest) => {
+  console.log(`RealmRoleService: createRoleInRealm called for realm ID: ${realmId}`, roleData);
+  return protectedApi.post<RoleResponse>(`/v1/admin/realms/${realmId}/roles`, roleData);
 };
 
 /**
- * Met à jour un rôle existant dans un Realm spécifique.
- * @param {number} realmId L'ID du Realm du rôle.
- * @param {number} roleId L'ID du rôle à mettre à jour.
- * @param {RoleRequest} roleData Les données à mettre à jour.
- * @returns {Promise<{ data: RoleResponse }>} Le rôle mis à jour.
+ * Updates an existing role within a specific realm.
+ * @param realmId The ID of the realm where the role exists.
+ * @param roleId The ID of the role to update.
+ * @param roleData The updated data for the role.
+ * @returns A Promise resolving to the updated RoleResponse.
  */
-export const updateRoleInRealm = (realmId: number, roleId: number, roleData: RoleRequest): Promise<{ data: RoleResponse }> => {
-  console.log(`RealmRoleService: updateRoleInRealm called for Realm ID: ${realmId}, Role ID: ${roleId}`, roleData);
-  return protectedApi.put(`/v1/admin/realms/${realmId}/roles/${roleId}`, { ...roleData, realmId });
+export const updateRoleInRealm = (realmId: number, roleId: number, roleData: RoleRequest) => {
+  console.log(`RealmRoleService: updateRoleInRealm called for realm ID: ${realmId}, role ID: ${roleId}`, roleData);
+  return protectedApi.put<RoleResponse>(`/v1/admin/realms/${realmId}/roles/${roleId}`, roleData);
 };
 
 /**
- * Supprime un rôle d'un Realm spécifique.
- * @param {number} realmId L'ID du Realm du rôle.
- * @param {number} roleId L'ID du rôle à supprimer.
- * @returns {Promise<void>}
+ * Deletes a role from a specific realm.
+ * @param realmId The ID of the realm where the role exists.
+ * @param roleId The ID of the role to delete.
+ * @returns A Promise resolving when the deletion is successful.
  */
-export const deleteRoleInRealm = (realmId: number, roleId: number): Promise<void> => {
-  console.log(`RealmRoleService: deleteRoleInRealm called for Realm ID: ${realmId}, Role ID: ${roleId}`);
+export const deleteRoleInRealm = (realmId: number, roleId: number) => {
+  console.log(`RealmRoleService: deleteRoleInRealm called for realm ID: ${realmId}, role ID: ${roleId}`);
   return protectedApi.delete(`/v1/admin/realms/${realmId}/roles/${roleId}`);
-};
-
-/**
- * Récupère un rôle spécifique dans un Realm.
- * @param {number} realmId L'ID du Realm du rôle.
- * @param {number} roleId L'ID du rôle.
- * @returns {Promise<{ data: RoleResponse }>} Le rôle trouvé.
- */
-export const getRoleInRealmById = (realmId: number, roleId: number): Promise<{ data: RoleResponse }> => {
-  console.log(`RealmRoleService: getRoleInRealmById called for Realm ID: ${realmId}, Role ID: ${roleId}`);
-  return protectedApi.get(`/v1/admin/realms/${realmId}/roles/${roleId}`);
-};
-
-/**
- * Attribue des permissions à un rôle dans un Realm spécifique.
- * @param {number} realmId L'ID du Realm du rôle.
- * @param {number} roleId L'ID du rôle.
- * @param {string[]} permissionNames Les noms des permissions à attribuer.
- * @returns {Promise<{ data: RoleResponse }>} Le rôle mis à jour avec les nouvelles permissions.
- */
-export const assignPermissionsToRoleInRealm = (realmId: number, roleId: number, permissionNames: string[]): Promise<{ data: RoleResponse }> => {
-  console.log(`RealmRoleService: assignPermissionsToRoleInRealm called for Realm ID: ${realmId}, Role ID: ${roleId}`, permissionNames);
-  return protectedApi.post(`/v1/admin/realms/${realmId}/roles/${roleId}/assign-permissions`, { permissionNames });
 };

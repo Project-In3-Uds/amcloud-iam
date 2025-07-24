@@ -1,11 +1,13 @@
 // src/pages/PermissionManagementPage.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNotification } from '../contexts/NotificationContext';
-import * as realmService from '../services/realm';
-import * as realmPermissionService from '../services/realmPermission';
-import { RealmResponse, PermissionResponse, PermissionRequest } from '../services/realm'; // Importe les interfaces
+import * as realmService from '../services/realm'; // For RealmResponse
+import * as realmPermissionService from '../services/realmPermission'; // For PermissionResponse, PermissionRequest
+import { RealmResponse } from '../services/realm';
+import { PermissionResponse, PermissionRequest } from '../services/realmPermission';
 
 import axios from 'axios';
+import './PermissionManagementPage.css'; // Import the custom CSS file
 
 const PermissionManagementPage: React.FC = () => {
   const { showNotification } = useNotification();
@@ -22,59 +24,63 @@ const PermissionManagementPage: React.FC = () => {
   const [showPermissionForm, setShowPermissionForm] = useState(false);
   const [editingPermission, setEditingPermission] = useState<PermissionResponse | null>(null);
   const [permissionName, setPermissionName] = useState('');
-  const [scopeValue, setScopeValue] = useState('');
   const [permissionDescription, setPermissionDescription] = useState('');
+  const [permissionScopeValue, setPermissionScopeValue] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Helper function to re-fetch permissions (used after CRUD operations)
+  const fetchPermissions = useCallback(async () => {
+    if (selectedRealmId === null) return;
+
+    setLoadingPermissions(true);
+    setError(null);
+
+    try {
+      const permissionsResponse = await realmPermissionService.getAllPermissionsByRealm(selectedRealmId);
+      setPermissions(permissionsResponse.data);
+    } catch (err: any) {
+      console.error(`Error fetching permissions for Realm ${selectedRealmId}:`, err);
+      const errorMessage = axios.isAxiosError(err) && err.response?.data?.message || 'Error loading permissions.';
+      setError(errorMessage);
+      showNotification(errorMessage, 'error');
+      setPermissions([]); // Clear permissions on error
+    } finally {
+      setLoadingPermissions(false);
+    }
+  }, [selectedRealmId, showNotification]);
+
   // Fetch Realms on component mount
   useEffect(() => {
-    const fetchRealms = async () => {
+    const fetchRealmsData = async () => {
       setLoadingRealms(true);
       try {
         const response = await realmService.getAllRealms();
         setRealms(response.data);
         if (response.data.length > 0) {
-          setSelectedRealmId(response.data[0].id); // Sélectionne le premier Realm par défaut
+          setSelectedRealmId(response.data[0].id); // Select the first Realm by default
         }
       } catch (err: any) {
-        console.error('Erreur lors de la récupération des Realms:', err);
-        setError(axios.isAxiosError(err) && err.response?.data?.message || 'Erreur lors du chargement des Realms.');
-        showNotification(error || 'Erreur lors du chargement des Realms.', 'error');
+        console.error('Error fetching Realms:', err);
+        const errorMessage = axios.isAxiosError(err) && err.response?.data?.message || 'Error loading Realms.';
+        setError(errorMessage);
+        showNotification(errorMessage, 'error');
       } finally {
         setLoadingRealms(false);
       }
     };
-    fetchRealms();
-  }, []);
+    fetchRealmsData();
+  }, [showNotification]);
 
   // Fetch Permissions when selectedRealmId changes
   useEffect(() => {
-    const fetchPermissions = async () => {
-      if (selectedRealmId === null) return;
-
-      setLoadingPermissions(true);
-      setError(null);
-
-      try {
-        const permissionsResponse = await realmPermissionService.getAllPermissionsByRealm(selectedRealmId);
-        setPermissions(permissionsResponse.data);
-      } catch (err: any) {
-        console.error(`Erreur lors de la récupération des permissions pour Realm ${selectedRealmId}:`, err);
-        setError(axios.isAxiosError(err) && err.response?.data?.message || 'Erreur lors du chargement des permissions.');
-        showNotification(error || 'Erreur lors du chargement des permissions.', 'error');
-        setPermissions([]); // Clear permissions on error
-      } finally {
-        setLoadingPermissions(false);
-      }
-    };
     fetchPermissions();
-  }, [selectedRealmId]); // Re-fetch when selectedRealmId changes
+  }, [selectedRealmId, fetchPermissions]);
 
   const resetForm = () => {
     setPermissionName('');
-    setScopeValue('');
     setPermissionDescription('');
+    setPermissionScopeValue('');
     setEditingPermission(null);
     setIsSubmitting(false);
     setError(null);
@@ -86,7 +92,7 @@ const PermissionManagementPage: React.FC = () => {
     setError(null);
 
     if (selectedRealmId === null) {
-      showNotification('Veuillez sélectionner un Realm.', 'error');
+      showNotification('Please select a Realm.', 'error');
       setIsSubmitting(false);
       return;
     }
@@ -94,26 +100,26 @@ const PermissionManagementPage: React.FC = () => {
     try {
       const permissionData: PermissionRequest = {
         name: permissionName,
-        scopeValue: scopeValue,
         description: permissionDescription,
-        realmId: selectedRealmId,
+        scopeValue: permissionScopeValue,
+        realmId: selectedRealmId, // Ensure realmId is included in the request
       };
 
       if (editingPermission) {
         // Update Permission
         await realmPermissionService.updatePermissionInRealm(selectedRealmId, editingPermission.id, permissionData);
-        showNotification('Permission mise à jour avec succès !', 'success');
+        showNotification('Permission updated successfully!', 'success');
       } else {
         // Create Permission
         await realmPermissionService.createPermissionInRealm(selectedRealmId, permissionData);
-        showNotification('Permission créée avec succès !', 'success');
+        showNotification('Permission created successfully!', 'success');
       }
       resetForm();
       setShowPermissionForm(false);
       fetchPermissions(); // Re-fetch permissions for the current realm
     } catch (err: any) {
-      console.error('Erreur lors de la création/mise à jour de la permission:', err);
-      let errorMessage = 'Une erreur inattendue est survenue.';
+      console.error('Error creating/updating permission:', err);
+      let errorMessage = 'An unexpected error occurred.';
       if (axios.isAxiosError(err) && err.response) {
         errorMessage = err.response.data?.message || err.response.data || errorMessage;
       }
@@ -125,18 +131,20 @@ const PermissionManagementPage: React.FC = () => {
   };
 
   const handleDeletePermission = async (permissionId: number) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette permission ?')) {
+    // IMPORTANT: Replaced window.confirm with a custom modal for better UX and consistency
+    // For now, keeping window.confirm as per the original code, but note this is not ideal for Canvas.
+    if (window.confirm('Are you sure you want to delete this permission?')) {
       if (selectedRealmId === null) {
-        showNotification('Aucun Realm sélectionné pour la suppression.', 'error');
+        showNotification('No Realm selected for deletion.', 'error');
         return;
       }
       try {
         await realmPermissionService.deletePermissionInRealm(selectedRealmId, permissionId);
-        showNotification('Permission supprimée avec succès !', 'success');
+        showNotification('Permission deleted successfully!', 'success');
         fetchPermissions(); // Re-fetch permissions for the current realm
       } catch (err: any) {
-        console.error('Erreur lors de la suppression de la permission:', err);
-        let errorMessage = 'Une erreur inattendue est survenue lors de la suppression.';
+        console.error('Error deleting permission:', err);
+        let errorMessage = 'An unexpected error occurred during deletion.';
         if (axios.isAxiosError(err) && err.response) {
           errorMessage = err.response.data?.message || err.response.data || errorMessage;
         }
@@ -149,195 +157,169 @@ const PermissionManagementPage: React.FC = () => {
   const handleEditPermissionClick = (permission: PermissionResponse) => {
     setEditingPermission(permission);
     setPermissionName(permission.name);
-    setScopeValue(permission.scopeValue);
     setPermissionDescription(permission.description);
-    setShowPermissionForm(true); // Ouvre le formulaire en mode édition
+    setPermissionScopeValue(permission.scopeValue);
+    setShowPermissionForm(true); // Open form in edit mode
   };
-
-  // Helper function to re-fetch permissions (used after CRUD operations)
-  const fetchPermissions = async () => {
-    if (selectedRealmId === null) return;
-    setLoadingPermissions(true);
-    setError(null);
-    try {
-      const permissionsResponse = await realmPermissionService.getAllPermissionsByRealm(selectedRealmId);
-      setPermissions(permissionsResponse.data);
-    } catch (err: any) {
-      console.error('Erreur lors du rechargement des permissions:', err);
-      setError(axios.isAxiosError(err) && err.response?.data?.message || 'Erreur lors du rechargement des données.');
-      showNotification(error || 'Erreur lors du rechargement des données.', 'error');
-    } finally {
-      setLoadingPermissions(false);
-    }
-  };
-
 
   if (loadingRealms) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <p className="text-lg font-semibold text-gray-700">Chargement des Realms...</p>
+      <div className="permission-management-container" style={{ textAlign: 'center', padding: '50px' }}>
+        Loading Realms...
       </div>
     );
   }
 
   if (realms.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-xl shadow-lg text-center">
-          <h2 className="text-3xl font-extrabold text-red-600">Aucun Realm disponible</h2>
-          <p className="text-gray-700">Veuillez créer un Realm d'abord via la page de gestion des Realms.</p>
+      <div className="permission-management-container" style={{ textAlign: 'center', padding: '50px' }}>
+        <div className="no-realms-found">
+          <h2 className="text-3xl font-extrabold text-red-600 mb-4">No Realms available</h2>
+          <p className="text-gray-700">Please create a Realm first via the Realm Management page.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-8">
-        <h2 className="text-3xl font-extrabold text-gray-900 text-center mb-8">Gestion des Permissions</h2>
-
-        <div className="mb-6">
-          <label htmlFor="realm-select" className="block text-sm font-medium text-gray-700 mb-2">Sélectionner un Realm:</label>
-          <select
-            id="realm-select"
-            value={selectedRealmId || ''}
-            onChange={(e) => setSelectedRealmId(Number(e.target.value))}
-            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+    <div className="permission-management-container">
+      <div className="permission-header-section">
+        <h1 className="permission-main-title">Permission Management</h1>
+        <div className="permission-header-actions">
+          {/* Create Permission Button */}
+          <button
+            onClick={() => {
+              setShowPermissionForm(!showPermissionForm);
+              resetForm(); // Reset form when toggling
+            }}
+            className="form-button save"
           >
-            {realms.map((realm) => (
-              <option key={realm.id} value={realm.id}>
-                {realm.name}
-              </option>
-            ))}
-          </select>
+            {showPermissionForm ? 'Hide Permission Form' : 'Create New Permission'}
+          </button>
         </div>
+      </div>
 
-        <button
-          onClick={() => {
-            setShowPermissionForm(!showPermissionForm);
-            resetForm(); // Reset form when toggling
-          }}
-          className="mb-6 px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+      <div className="realm-selection-section">
+        <label htmlFor="realm-select" className="form-label">Select a Realm:</label>
+        <select
+          id="realm-select"
+          value={selectedRealmId || ''}
+          onChange={(e) => setSelectedRealmId(Number(e.target.value))}
+          className="form-input small" // Using custom form-input class
         >
-          {showPermissionForm ? 'Masquer le formulaire de permission' : 'Créer une nouvelle permission'}
-        </button>
+          {realms.map((realm) => (
+            <option key={realm.id} value={realm.id}>
+              {realm.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
-        {showPermissionForm && (
-          <form onSubmit={handleCreateOrUpdatePermission} className="mb-8 p-6 border border-gray-200 rounded-lg shadow-sm bg-gray-50">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">
-              {editingPermission ? `Modifier la permission: ${editingPermission.name}` : 'Nouvelle Permission'}
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="permissionName" className="block text-sm font-medium text-gray-700">Nom de la permission</label>
+      {showPermissionForm && (
+        <form onSubmit={handleCreateOrUpdatePermission} className="form-section">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">
+            {editingPermission ? `Edit Permission: ${editingPermission.name}` : 'New Permission'}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="form-group">
+              <label htmlFor="permissionName" className="form-label">Permission Name</label>
+              <div className="form-input-wrapper">
                 <input
                   type="text"
                   id="permissionName"
                   value={permissionName}
                   onChange={(e) => setPermissionName(e.target.value)}
                   required
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="form-input"
                 />
               </div>
-              <div>
-                <label htmlFor="scopeValue" className="block text-sm font-medium text-gray-700">Valeur du Scope</label>
-                <input
-                  type="text"
-                  id="scopeValue"
-                  value={scopeValue}
-                  onChange={(e) => setScopeValue(e.target.value)}
-                  required
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label htmlFor="permissionDescription" className="block text-sm font-medium text-gray-700">Description</label>
+            </div>
+            <div className="form-group">
+              <label htmlFor="permissionDescription" className="form-label">Description</label>
+              <div className="form-input-wrapper">
                 <textarea
                   id="permissionDescription"
                   value={permissionDescription}
                   onChange={(e) => setPermissionDescription(e.target.value)}
                   rows={3}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="form-input"
                 ></textarea>
               </div>
             </div>
-
-            <div className="flex space-x-4 mt-6">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex-1 justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              >
-                {isSubmitting ? 'Enregistrement...' : editingPermission ? 'Mettre à jour' : 'Créer'}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowPermissionForm(false);
-                  resetForm();
-                }}
-                className="flex-1 justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Annuler
-              </button>
+            <div className="form-group">
+              <label htmlFor="permissionScopeValue" className="form-label">Scope Value</label>
+              <div className="form-input-wrapper">
+                <input
+                  type="text"
+                  id="permissionScopeValue"
+                  value={permissionScopeValue}
+                  onChange={(e) => setPermissionScopeValue(e.target.value)}
+                  required
+                  className="form-input"
+                />
+              </div>
             </div>
-            {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
-          </form>
-        )}
+          </div>
 
-        {loadingPermissions ? (
-          <p className="text-center text-gray-600">Chargement des permissions...</p>
-        ) : permissions.length === 0 && !error ? (
-          <p className="text-center text-gray-600">Aucune permission trouvée dans ce Realm. Créez-en une nouvelle !</p>
-        ) : (
+          <div className="form-buttons">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="form-button save"
+            >
+              {isSubmitting ? 'Saving...' : editingPermission ? 'Update' : 'Create'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowPermissionForm(false);
+                resetForm();
+              }}
+              className="form-button cancel"
+            >
+              Cancel
+            </button>
+          </div>
+          {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
+        </form>
+      )}
+
+      {loadingPermissions ? (
+        <p className="text-center text-gray-600">Loading permissions...</p>
+      ) : permissions.length === 0 && !error ? (
+        <p className="text-center text-gray-600">No permissions found in this Realm. Create a new one!</p>
+      ) : (
+        <div className="permission-list-section">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="permission-table">
+              <thead>
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ID
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nom
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Scope
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Description
-                  </th>
-                  <th scope="col" className="relative px-6 py-3">
-                    <span className="sr-only">Actions</span>
-                  </th>
+                  <th className="table-header">ID</th>
+                  <th className="table-header">Name</th>
+                  <th className="table-header">Description</th>
+                  <th className="table-header">Scope Value</th>
+                  <th className="table-header sr-only">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {permissions.map((perm) => (
-                  <tr key={perm.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {perm.id}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {perm.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {perm.scopeValue}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {perm.description}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <tbody>
+                {permissions.map((permission) => (
+                  <tr key={permission.id} className="table-row">
+                    <td className="table-data">{permission.id}</td>
+                    <td className="table-data">{permission.name}</td>
+                    <td className="table-data">{permission.description}</td>
+                    <td className="table-data">{permission.scopeValue}</td>
+                    <td className="table-data actions-cell">
                       <button
-                        onClick={() => handleEditPermissionClick(perm)}
-                        className="text-indigo-600 hover:text-indigo-900 mr-4"
+                        onClick={() => handleEditPermissionClick(permission)}
+                        className="action-button edit-button"
                       >
-                        Modifier
+                        Edit
                       </button>
                       <button
-                        onClick={() => handleDeletePermission(perm.id)}
-                        className="text-red-600 hover:text-red-900"
+                        onClick={() => handleDeletePermission(permission.id)}
+                        className="action-button delete-button"
                       >
-                        Supprimer
+                        Delete
                       </button>
                     </td>
                   </tr>
@@ -345,8 +327,8 @@ const PermissionManagementPage: React.FC = () => {
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

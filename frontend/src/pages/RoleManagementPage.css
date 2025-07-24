@@ -1,17 +1,16 @@
-/* src/pages/RealmManagementPage.css */
+/* src/pages/RoleManagementPage.css */
 
-.realm-management-container {
+.role-management-container {
   background-color: #ffffff; /* White background for the main content area */
   padding: 20px 25px; /* Padding similar to Keycloak's content area */
-  border-radius: 0px; /* CHANGED: Removed border-radius to align perfectly with header/sidebar */
-  box-shadow: none; /* CHANGED: Removed shadow to blend with main content area */
-  /* min-height: calc(100vh - 100px); */ /* REMOVED: Adjust height to fill space, considering header */
+  border-radius: 0px; /* Removed border-radius to align perfectly with header/sidebar */
+  box-shadow: none; /* Removed shadow to blend with main content area */
   display: flex;
   flex-direction: column;
   flex-grow: 1; /* Ensure it takes all available height within content-area */
 }
 
-.realm-header-section {
+.role-header-section {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -20,20 +19,20 @@
   border-bottom: 1px solid #eee; /* Separator line */
 }
 
-.realm-main-title {
+.role-main-title {
   font-size: 1.5rem; /* Larger title for the main section */
   font-weight: 600;
   color: #333;
   margin: 0;
 }
 
-.realm-header-actions {
+.role-header-actions {
   display: flex;
   align-items: center;
   gap: 15px; /* Space between trash icon and button */
 }
 
-.realm-tabs-nav {
+.role-tabs-nav {
   display: flex;
   border-bottom: 1px solid #ddd; /* Bottom border for tabs */
   margin-bottom: 20px;
@@ -41,7 +40,7 @@
   white-space: nowrap; /* Prevent tabs from wrapping */
 }
 
-.realm-tab-button {
+.role-tab-button {
   padding: 10px 15px;
   background-color: transparent;
   border: none;
@@ -53,27 +52,33 @@
   white-space: nowrap; /* Prevent wrapping */
 }
 
-.realm-tab-button:hover:not(:disabled) {
+.role-tab-button:hover:not(:disabled) {
   color: #007bff; /* Blue on hover */
 }
 
-.realm-tab-button.active {
+.role-tab-button.active {
   color: #007bff; /* Active tab color */
   border-bottom-color: #007bff; /* Active tab underline */
   font-weight: 600;
 }
 
-.realm-tab-button:disabled {
+.role-tab-button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-.realm-tab-content {
+.role-tab-content {
   padding-top: 15px;
 }
 
+/* Form Styling */
 .form-section {
   margin-bottom: 20px;
+  padding: 20px; /* Add padding to the form section */
+  border: 1px solid #e0e0e0; /* Light border */
+  border-radius: 8px; /* Slightly rounded corners */
+  background-color: #fcfcfc; /* Light background for the form */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Subtle shadow */
 }
 
 .form-group {
@@ -169,12 +174,12 @@
   cursor: help;
 }
 
-/* Styles for Realm List */
-.realm-list-section {
-  margin-top: 0px; /* CHANGED: Removed top margin */
+/* Styles for Role List */
+.role-list-section {
+  margin-top: 20px;
 }
 
-.realm-intro-text {
+.role-intro-text {
   background-color: #e0f7fa; /* Light blue background */
   border-left: 4px solid #00bcd4; /* Cyan left border */
   padding: 15px 20px;
@@ -185,22 +190,17 @@
   line-height: 1.5;
 }
 
-.realm-intro-text strong {
+.role-intro-text strong {
   color: #004d40; /* Even darker text for strong words */
 }
 
-.realm-list-title {
-  /* This title is now removed as per user request, but keeping the class in case needed later */
-  display: none; /* Hidden */
-}
-
-.realm-list {
+.role-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-.realm-list-item {
+.role-list-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -212,19 +212,19 @@
   transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.realm-list-item:hover {
+.role-list-item:hover {
   background-color: #f0f0f0;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
-.realm-name {
+.role-name {
   font-weight: 500;
   color: #007bff; /* Make it look clickable */
   cursor: pointer;
   flex-grow: 1; /* Allow name to take available space */
 }
 
-.realm-description {
+.role-description {
   font-size: 0.85rem;
   color: #666;
   margin-left: 20px; /* Space from name */
@@ -234,7 +234,7 @@
   text-overflow: ellipsis;
 }
 
-.realm-delete-button {
+.role-delete-button {
   background: none;
   border: none;
   color: #dc3545;
@@ -246,14 +246,123 @@
   border-radius: 4px;
 }
 
-.realm-delete-button:hover {
+.role-delete-button:hover {
   color: #a71d2a;
   background-color: #f8d7da; /* Light red background on hover */
 }
 
-.no-realms-found {
+.no-roles-found {
   text-align: center;
   padding: 50px;
   color: #777;
   font-size: 1.1rem;
+}
+
+/* Table specific styles */
+.role-table {
+  width: 100%;
+  border-collapse: collapse; /* Remove space between table cells */
+  margin-top: 20px;
+}
+
+.table-header {
+  padding: 12px 15px;
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #555;
+  background-color: #f2f2f2; /* Light gray header background */
+  border-bottom: 1px solid #ddd;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table-row {
+  background-color: #fff;
+  border-bottom: 1px solid #eee;
+}
+
+.table-row:hover {
+  background-color: #f9f9f9;
+}
+
+.table-data {
+  padding: 12px 15px;
+  font-size: 0.9rem;
+  color: #444;
+  vertical-align: top; /* Align content to the top */
+}
+
+.actions-cell {
+  text-align: right;
+  white-space: nowrap; /* Prevent buttons from wrapping */
+}
+
+.action-button {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  margin-left: 8px; /* Space between buttons */
+}
+
+.edit-button {
+  background-color: #007bff;
+  color: white;
+  border: 1px solid #007bff;
+}
+
+.edit-button:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+.delete-button {
+  background-color: #dc3545;
+  color: white;
+  border: 1px solid #dc3545;
+}
+
+.delete-button:hover {
+  background-color: #a71d2a;
+  border-color: #a71d2a;
+}
+
+/* Permissions Checkbox Grid */
+.permissions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Responsive grid */
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.permission-item {
+  display: flex;
+  align-items: center;
+  background-color: #f8f8f8;
+  border: 1px solid #eee;
+  border-radius: 5px;
+  padding: 8px 10px;
+}
+
+.checkbox-input {
+  margin-right: 8px;
+  width: 16px;
+  height: 16px;
+  accent-color: #007bff; /* Accent color for checkbox */
+}
+
+.checkbox-label {
+  font-size: 0.85rem;
+  color: #333;
+  cursor: pointer;
+}
+
+/* Realm selection section */
+.realm-selection-section {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px; /* Same gap as form-group */
 }

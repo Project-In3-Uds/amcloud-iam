@@ -14,7 +14,7 @@ interface User {
   enabled: boolean;
   createdAt: string;
   updatedAt: string;
-  lastLoginAt?: string | null; // <-- allow null
+  lastLoginAt: string | null; // Corrected to match UserResponse
   roles: string[];
   permissions: string[];
 }
@@ -547,8 +547,7 @@ const UserManagementPage: React.FC = () => {
             <div className="user-intro-text">
               <p>
                 In Amcloud IAM, <strong>Users</strong> are individuals who can authenticate and interact with your applications.
-                Each user has a unique identity, associated roles, and permissions that define their access rights.
-              </p>
+               </p>
               <p>
                 Manage existing users from the list below, or click "Create User" to add a new one.
               </p>

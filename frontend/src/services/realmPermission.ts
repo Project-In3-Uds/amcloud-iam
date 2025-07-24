@@ -1,58 +1,65 @@
 // src/services/realmPermission.ts
 import { protectedApi } from './api';
-import { PermissionResponse, PermissionRequest } from './realm'; // Importe les interfaces depuis realm.ts
+
+// Interface for Permission data received in responses
+export interface PermissionResponse {
+  id: number;
+  name: string;
+  description: string;
+  scopeValue: string; // e.g., "profile", "email"
+  realmId: number; // Added based on updated backend entities/schema
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Interface for Permission data used in requests (create/update)
+export interface PermissionRequest {
+  name: string;
+  description: string;
+  scopeValue: string;
+  realmId: number; // Realm ID is required for creation/update within a specific realm
+}
 
 /**
- * Récupère toutes les permissions d'un Realm spécifique.
- * @param {number} realmId L'ID du Realm.
- * @returns {Promise<{ data: PermissionResponse[] }>} Une liste des permissions.
+ * Retrieves all permissions for a specific realm.
+ * @param realmId The ID of the realm.
+ * @returns A Promise resolving to an array of PermissionResponse.
  */
-export const getAllPermissionsByRealm = (realmId: number): Promise<{ data: PermissionResponse[] }> => {
-  console.log(`RealmPermissionService: getAllPermissionsByRealm called for Realm ID: ${realmId}`);
-  return protectedApi.get(`/v1/admin/realms/${realmId}/permissions`);
+export const getAllPermissionsByRealm = (realmId: number) => {
+  console.log(`RealmPermissionService: getAllPermissionsByRealm called for realm ID: ${realmId}`);
+  return protectedApi.get<PermissionResponse[]>(`/v1/admin/realms/${realmId}/permissions`);
 };
 
 /**
- * Crée une nouvelle permission dans un Realm spécifique.
- * @param {number} realmId L'ID du Realm où créer la permission.
- * @param {PermissionRequest} permissionData Les données de la permission à créer.
- * @returns {Promise<{ data: PermissionResponse }>} La permission créée.
+ * Creates a new permission within a specific realm.
+ * @param realmId The ID of the realm where the permission will be created.
+ * @param permissionData The data for the new permission.
+ * @returns A Promise resolving to the created PermissionResponse.
  */
-export const createPermissionInRealm = (realmId: number, permissionData: PermissionRequest): Promise<{ data: PermissionResponse }> => {
-  console.log(`RealmPermissionService: createPermissionInRealm called for Realm ID: ${realmId}`, permissionData);
-  return protectedApi.post(`/v1/admin/realms/${realmId}/permissions`, { ...permissionData, realmId });
+export const createPermissionInRealm = (realmId: number, permissionData: PermissionRequest) => {
+  console.log(`RealmPermissionService: createPermissionInRealm called for realm ID: ${realmId}`, permissionData);
+  return protectedApi.post<PermissionResponse>(`/v1/admin/realms/${realmId}/permissions`, permissionData);
 };
 
 /**
- * Met à jour une permission existante dans un Realm spécifique.
- * @param {number} realmId L'ID du Realm de la permission.
- * @param {number} permissionId L'ID de la permission à mettre à jour.
- * @param {PermissionRequest} permissionData Les données à mettre à jour.
- * @returns {Promise<{ data: PermissionResponse }>} La permission mise à jour.
+ * Updates an existing permission within a specific realm.
+ * @param realmId The ID of the realm where the permission exists.
+ * @param permissionId The ID of the permission to update.
+ * @param permissionData The updated data for the permission.
+ * @returns A Promise resolving to the updated PermissionResponse.
  */
-export const updatePermissionInRealm = (realmId: number, permissionId: number, permissionData: PermissionRequest): Promise<{ data: PermissionResponse }> => {
-  console.log(`RealmPermissionService: updatePermissionInRealm called for Realm ID: ${realmId}, Permission ID: ${permissionId}`, permissionData);
-  return protectedApi.put(`/v1/admin/realms/${realmId}/permissions/${permissionId}`, { ...permissionData, realmId });
+export const updatePermissionInRealm = (realmId: number, permissionId: number, permissionData: PermissionRequest) => {
+  console.log(`RealmPermissionService: updatePermissionInRealm called for realm ID: ${realmId}, permission ID: ${permissionId}`, permissionData);
+  return protectedApi.put<PermissionResponse>(`/v1/admin/realms/${realmId}/permissions/${permissionId}`, permissionData);
 };
 
 /**
- * Supprime une permission d'un Realm spécifique.
- * @param {number} realmId L'ID du Realm de la permission.
- * @param {number} permissionId L'ID de la permission à supprimer.
- * @returns {Promise<void>}
+ * Deletes a permission from a specific realm.
+ * @param realmId The ID of the realm where the permission exists.
+ * @param permissionId The ID of the permission to delete.
+ * @returns A Promise resolving when the deletion is successful.
  */
-export const deletePermissionInRealm = (realmId: number, permissionId: number): Promise<void> => {
-  console.log(`RealmPermissionService: deletePermissionInRealm called for Realm ID: ${realmId}, Permission ID: ${permissionId}`);
+export const deletePermissionInRealm = (realmId: number, permissionId: number) => {
+  console.log(`RealmPermissionService: deletePermissionInRealm called for realm ID: ${realmId}, permission ID: ${permissionId}`);
   return protectedApi.delete(`/v1/admin/realms/${realmId}/permissions/${permissionId}`);
-};
-
-/**
- * Récupère une permission spécifique dans un Realm.
- * @param {number} realmId L'ID du Realm de la permission.
- * @param {number} permissionId L'ID de la permission.
- * @returns {Promise<{ data: PermissionResponse }>} La permission trouvée.
- */
-export const getPermissionInRealmById = (realmId: number, permissionId: number): Promise<{ data: PermissionResponse }> => {
-  console.log(`RealmPermissionService: getPermissionInRealmById called for Realm ID: ${realmId}, Permission ID: ${permissionId}`);
-  return protectedApi.get(`/v1/admin/realms/${realmId}/permissions/${permissionId}`);
 };
